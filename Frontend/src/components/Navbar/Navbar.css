@@ -84,6 +84,14 @@
         padding: 0 !important;
         min-width: auto;
         height: auto;
+        /* Prevent page-level .Event rules from stretching this link */
+        width: auto !important;
+        max-width: 160px;
+        flex: 0 0 auto;
+        white-space: nowrap;
+        text-align: center;
+        overflow: hidden;
+        text-overflow: ellipsis;
         display: inline-flex;
         align-items: center;
         justify-content: center;
