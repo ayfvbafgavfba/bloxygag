@@ -74,21 +74,35 @@
         white-space: nowrap;
       }
 
-      .Raffle {
-        margin-left: 12px;
-        /* give the raffle pill a stable minimum width so it reads like a button */
-        min-width: 110px;
-        justify-content: center;
-      }
-
+      /* Make Raffle and Event match the small purple glow style of Claims */
+      .Raffle,
       .Event {
         margin-left: 12px;
-        /* Prevent global .Event (page) rules from stretching this link */
-        width: auto;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        padding: 0 8px;
+        min-width: auto;
+        height: auto;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        min-width: 84px;
+      }
+
+      .Raffle > p,
+      .Event > p {
+        color: #863aff;
+        font-size: 10px;
+        font-weight: 600;
+        text-shadow: 0 0 15px rgba(134, 58, 255, 0.65);
+        text-transform: uppercase;
+        margin: 0;
+        line-height: 1;
+      }
+
+      .Raffle:hover > p,
+      .Event:hover > p {
+        text-shadow: 0 0 20px rgba(134, 58, 255, 0.85);
       }
 
       .ImportantLinks {
