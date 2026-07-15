@@ -77,6 +77,13 @@
 
       .Event {
         margin-left: 6px;
+        /* Override global .Event styles (from Event.css) which set width:100% and
+           cause the navbar Event link to stretch across the header. Ensure the
+           navbar Event link behaves like other inline purple links. */
+        width: auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
       }
 
       .ImportantLinks {
