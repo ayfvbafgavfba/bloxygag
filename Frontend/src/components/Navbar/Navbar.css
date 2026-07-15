@@ -33,7 +33,8 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        padding: 4px 12px;
+        /* slightly larger pill padding for better visual weight */
+        padding: 6px 14px;
         height: auto;
         border-radius: 999px;
         background: linear-gradient(90deg, rgba(134, 58, 255, 0.14), rgba(190, 122, 255, 0.06));
@@ -44,12 +45,14 @@
         > p {
           color: #e7d6ff;
           font-weight: 700;
-          font-size: 11px;
-          letter-spacing: 0.06em;
+          /* slightly larger text to match site weight */
+          font-size: 12px;
+          letter-spacing: 0.04em;
           text-transform: uppercase;
           text-shadow: 0 0 8px rgba(134, 58, 255, 0.28);
           margin: 0;
           line-height: 1;
+          padding: 0 2px;
         }
       }
 
@@ -72,18 +75,20 @@
       }
 
       .Raffle {
-        margin-left: 30px;
+        margin-left: 12px;
+        /* give the raffle pill a stable minimum width so it reads like a button */
+        min-width: 110px;
+        justify-content: center;
       }
 
       .Event {
-        margin-left: 6px;
-        /* Override global .Event styles (from Event.css) which set width:100% and
-           cause the navbar Event link to stretch across the header. Ensure the
-           navbar Event link behaves like other inline purple links. */
+        margin-left: 12px;
+        /* Prevent global .Event (page) rules from stretching this link */
         width: auto;
         display: inline-flex;
         align-items: center;
         justify-content: center;
+        min-width: 84px;
       }
 
       .ImportantLinks {
