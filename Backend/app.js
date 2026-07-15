@@ -12,11 +12,10 @@ const helmet = require("helmet");
 const bodyParser = require("body-parser");
 const { body, validationResult } = require("express-validator");
 const crypto = require("crypto");
-const { initSocket, getIO } = require("./utils/socket");
+const { initSocket } = require("./utils/socket");
 const { Webhook } = require("discord-webhook-node");
 const { MONGODB_URI } = require("./config");
 const { MongoMemoryReplSet } = require("mongodb-memory-server");
-const http = require("http");
 const compression = require("compression");
 const utils = require("./utils/events");
 const cron = require("node-cron");
@@ -31,9 +30,6 @@ withdrawCryptoHook.setAvatar(
 );
 
 const app = express();
-
-const socketServer = http.createServer(app);
-initSocket(socketServer);
 
 mongoose.set("strictQuery", "false");
 // const dev_db = "mongodb+srv://admin:admin@cluster.9atdqpo.mongodb.net/?retryWrites=true&w=majority&appName=cluster";
@@ -115,31 +111,15 @@ async function main() {
     console.error('Failed to load routes after MongoDB connection:', err.message);
   }
 
-  startServer();
-}
-
-function startServer() {
-  try {
-    socketServer.listen(SOCKET_PORT);
-    
-    // Start cron job to check Apirone deposits every 5 minutes
-    cron.schedule('*/5 * * * *', async () => {
-      console.log('Running Apirone deposit check...');
-      try {
-        await checkAndCreditDeposits();
-      } catch (error) {
-        console.error('Error in deposit check cron job:', error);
-      }
-    });
-  } catch (err) {
-    if (err.code === "EADDRINUSE") {
-      console.error(
-        `Socket port ${SOCKET_PORT} is already in use. Make sure no other instance is running.`
-      );
-    } else {
-      throw err;
+  // Start cron job to check Apirone deposits every 5 minutes
+  cron.schedule('*/5 * * * *', async () => {
+    console.log('Running Apirone deposit check...');
+    try {
+      await checkAndCreditDeposits();
+    } catch (error) {
+      console.error('Error in deposit check cron job:', error);
     }
-  }
+  });
 }
 
 app.set("trust proxy", 1);
@@ -260,19 +240,8 @@ app.use(function (err, req, res, next) {
   res.render("error");
 });
 
-const SOCKET_PORT = process.env.SOCKET_PORT || 6565;
-socketServer.on("listening", () => {
-  console.log(`Socket is running on port ${SOCKET_PORT}`);
-});
-socketServer.on("error", (err) => {
-  if (err.code === "EADDRINUSE") {
-    console.error(`Socket port ${SOCKET_PORT} is already in use. Make sure no other instance is running.`);
-    return;
-  }
-  console.error("Socket server error:", err);
-});
-
 module.exports = {
   app,
   appReady,
+  initSocket,
 };

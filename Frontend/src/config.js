@@ -45,11 +45,18 @@ function getLocalSocketUrl() {
 const isProduction = import.meta.env.PROD;
 const apiOverride = import.meta.env.VITE_API_URL;
 const socketOverride = import.meta.env.VITE_SOCKET_URL;
-const productionHost = "https://bloxygag.org";
+
+function getProductionHost() {
+  if (typeof window === "undefined") {
+    return "https://bloxygag.org";
+  }
+  const { hostname, port, protocol } = window.location;
+  return `${protocol}//${hostname}${port ? `:${port}` : ""}`;
+}
 
 export default {
-  api: apiOverride || (isProduction ? productionHost : getLocalApiUrl()),
-  socketUrl: socketOverride || (isProduction ? productionHost : getLocalSocketUrl()),
+  api: apiOverride || (isProduction ? getProductionHost() : getLocalApiUrl()),
+  socketUrl: socketOverride || (isProduction ? getProductionHost() : getLocalSocketUrl()),
   h_captcha_key: isProduction
     ? "495be111-f6a7-4ca5-9b8f-d0149998a742"
     : "20000000-ffff-ffff-ffff-000000000002",

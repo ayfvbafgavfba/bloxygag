@@ -40,7 +40,13 @@ function initSocket(server) {
 
   io.on("connection", async (socket) => {
     console.log("socket connected:", socket.id, "auth-token-present:", !!socket.handshake?.auth?.token);
-    io.emit("ONLINE_UPDATE", io.engine.clientsCount + 100);
+    socket.on("disconnect", (reason) => {
+      console.log("socket disconnected:", socket.id, reason);
+      io.emit("ONLINE_UPDATE", io.engine.clientsCount);
+    });
+
+    // Emit current online count immediately to all clients
+    io.emit("ONLINE_UPDATE", io.engine.clientsCount);
 
     // Attempt to join per-user room if token provided
     try {

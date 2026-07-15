@@ -30,6 +30,9 @@ async function getBalance(user) {
 
 function getOnlineCount() {
   const io = getIO();
+  if (!io) {
+    return 0;
+  }
   return io.engine.clientsCount;
 }
 
