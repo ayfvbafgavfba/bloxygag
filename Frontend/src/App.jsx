@@ -12,25 +12,13 @@ import { AnimatePresence } from "framer-motion";
 import { LazyMotion, domAnimation } from "framer-motion";
 import Cookies from "js-cookie";
 
-const socket = io(config.socketUrl, {
-  path: "/socket.io",
-  reconnectionDelayMax: 10000,
-  auth: {
-    token: getJWT(),
-  },
-  transports: ["polling", "websocket"],
-});
-
-socket.on("connect", () => {
-  console.log("[client socket] connect", socket.id, "authPresent:", !!getJWT());
-});
-socket.on("disconnect", (reason) => {
-  console.log("[client socket] disconnect", reason);
-});
+// Socket will be initialized after auth is checked to ensure a valid token
+// is provided during the Socket.IO handshake.
 
 export default function App() {
   const [userData, setUserData] = useState(null);
   const [loadingData, setLoadingData] = useState(true);
+  const [socket, setSocket] = useState(null);
   const [ConnectRobloxModal, setModalState] = useState(null);
 
   const effectiveUserData = userData;
@@ -105,11 +93,46 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (!socket) return;
     socket.on("BALANCE_UPDATE", handleBalanceUpdate);
     return () => {
       socket.off("BALANCE_UPDATE", handleBalanceUpdate);
     };
   }, [handleBalanceUpdate]);
+
+  useEffect(() => {
+    // Initialize socket after auth check so the token is available
+    if (loadingData) return;
+    // Clean up existing socket if any
+    if (socket) {
+      socket.disconnect();
+      setSocket(null);
+    }
+
+    const s = io(config.socketUrl, {
+      path: "/socket.io",
+      reconnectionDelayMax: 10000,
+      auth: {
+        token: getJWT(),
+      },
+      transports: ["polling", "websocket"],
+    });
+
+    s.on("connect", () => {
+      console.log("[client socket] connect", s.id, "authPresent:", !!getJWT());
+    });
+    s.on("disconnect", (reason) => {
+      console.log("[client socket] disconnect", reason);
+    });
+
+    setSocket(s);
+
+    return () => {
+      try {
+        s.disconnect();
+      } catch (e) {}
+    };
+  }, [loadingData]);
 
   return (
     <>
