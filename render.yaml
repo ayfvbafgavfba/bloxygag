@@ -4,7 +4,7 @@ services:
     env: node
     repo: .
     branch: main
-    buildCommand: cd Backend && npm ci
+    buildCommand: cd Frontend && npm_config_production=false npm ci && npm run build && cd ../Backend && npm ci
     startCommand: cd Backend && node ./bin/www
     envVars:
       - key: MONGODB_URI
@@ -14,5 +14,17 @@ services:
       - key: HCAPTCHA_SECRET
         sync: false
       - key: TRANSACTION_SECRET
+        sync: false
+      - key: SESSION_SECRET
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: VITE_API_URL
+        sync: false
+      - key: VITE_SOCKET_URL
+        sync: false
+      - key: APIRONE_API_KEY
+        sync: false
+      - key: APIRONE_CALLBACK_SECRET
         sync: false
 *** End Patch
