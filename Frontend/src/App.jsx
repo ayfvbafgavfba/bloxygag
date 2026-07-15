@@ -12,12 +12,13 @@ import { AnimatePresence } from "framer-motion";
 import { LazyMotion, domAnimation } from "framer-motion";
 import Cookies from "js-cookie";
 
-const socket = io(`${config.socketUrl}/`, {
+const socket = io(config.socketUrl, {
+  path: "/socket.io",
   reconnectionDelayMax: 10000,
   auth: {
     token: getJWT(),
   },
-  transports: ["websocket"],
+  transports: ["polling", "websocket"],
 });
 
 socket.on("connect", () => {

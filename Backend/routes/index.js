@@ -123,7 +123,11 @@ router.post("/event/end", accountController.authenticateToken, eventController.e
 router.get("/event/history", eventController.get_event_history);
 
 // MISC ROUTES
-router.get("*", function (req, res) {
+router.get("*", function (req, res, next) {
+  if (req.path.startsWith("/socket.io")) {
+    return next();
+  }
+
   if (req.accepts("html")) {
     return res.sendFile(path.join(__dirname, "..", "public", "index.html"));
   }
