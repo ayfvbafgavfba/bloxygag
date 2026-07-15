@@ -1,6 +1,7 @@
 import "./MarketplacePage.css";
 import { useCallback, useState, useContext, useEffect, useRef } from "react";
 import UserContext from "../../utils/UserContext";
+import numeral from "numeral";
 import SocketContext from "../../utils/SocketContext";
 import {
   cross,
@@ -303,6 +304,8 @@ export default function MarketplacePage() {
   );
 
   useEffect(() => {
+    if (!socket) return;
+
     socket.on("MARKETPLACE_UPDATE", handleMarketplaceUpdate);
     return () => {
       socket.off("MARKETPLACE_UPDATE", handleMarketplaceUpdate);

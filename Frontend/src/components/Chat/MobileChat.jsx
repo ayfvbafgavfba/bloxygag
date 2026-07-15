@@ -126,6 +126,8 @@ export default function MobileChat({ closeChat }) {
   }, []);
 
   useEffect(() => {
+    if (!socket) return;
+
     socket.on("CHAT_UPDATE", handleChatUpdate);
     socket.on("GIVEAWAY_UPDATE", handleGiveawayPopup);
     socket.on("ONLINE_UPDATE", handleOnlineUpdate);

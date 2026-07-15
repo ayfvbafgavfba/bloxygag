@@ -2,6 +2,7 @@ import "./CoinflipView.css";
 import { useState, useCallback, useEffect, useContext } from "react";
 import PropTypes from "prop-types";
 import SocketContext from "../../../utils/SocketContext";
+import numeral from "numeral";
 import {
   logo,
   anonymous,
@@ -51,6 +52,8 @@ export default function CoinflipViewing({ Information, closeModal }) {
   }, [gameInfo]);
 
   useEffect(() => {
+    if (!socket) return;
+
     socket.on("COINFLIP_FINISHED", handleCoinflipUpdate);
     return () => {
       socket.off("COINFLIP_FINISHED", handleCoinflipUpdate);

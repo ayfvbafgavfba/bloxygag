@@ -2,6 +2,7 @@ import "./JackpotPage.css";
 import { useCallback, useState, useContext, useEffect } from "react";
 import UserContext from "../../utils/UserContext";
 import { isUserBanned } from "../../utils/banUtils";
+import numeral from "numeral";
 import SocketContext from "../../utils/SocketContext";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import PropTypes from "prop-types";
@@ -123,6 +124,8 @@ export default function JackpotPage() {
   const rotationDEGCalc = rotationPercentCalc * 360 + 3600;
 
   useEffect(() => {
+    if (!socket) return;
+
     socket.on("JACKPOT_UPDATE", handleJackpotUpdate);
     return () => {
       socket.off("JACKPOT_UPDATE", handleJackpotUpdate);

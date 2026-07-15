@@ -2,6 +2,7 @@ import "./Coinflip.css";
 import { heads, tails, arrow } from "../../../assets/imageExport";
 import { useCallback, useState, useContext, useEffect } from "react";
 import CoinflipCreation from "../CoinflipCreation/CoinflipCreation";
+import numeral from "numeral";
 import UserContext from "../../../utils/UserContext";
 import CoinflipOverview from "../CoinflipOverview/CoinflipOverview";
 import SocketContext from "../../../utils/SocketContext";
@@ -117,6 +118,8 @@ export default function Coinflip() {
   }, [userData]);
 
   useEffect(() => {
+    if (!socket) return;
+
     socket.on("COINFLIP_UPDATE", handleCoinflipsUpdate);
     socket.on("connect", () => console.log("[client socket] connected to server", socket.id));
     socket.on("disconnect", (reason) => console.log("[client socket] disconnected from server", reason));
