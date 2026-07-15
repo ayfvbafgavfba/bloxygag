@@ -1,0 +1,81 @@
+# GAG2 Casino Quick Reference
+
+✅ **Setup Complete! Database now has 49 GAG2 items**
+
+## Quick Commands
+
+### Import Items (if needed again)
+```bash
+npm run import-gag2
+```
+- Imports 16 pets + 33 seeds
+- Automatically clears old GAG2 items
+- Sets default values by rarity
+
+### Give Items to Player
+```bash
+npm run auto-deposit -- <robloxId> "<item1,item2>" "<qty1,qty2>"
+```
+
+**Examples:**
+```bash
+# Give 1 Frog to player 123456
+npm run auto-deposit -- 123456 "Frog" "1"
+
+# Give mixed items
+npm run auto-deposit -- 123456 "Frog,Apple,Fire Fern,Unicorn" "5,10,2,1"
+
+# Give 100 Carrots  
+npm run auto-deposit -- 123456 "Carrot" "100"
+```
+
+### Process Withdrawals
+```bash
+npm run auto-withdraw -- <robloxId> <quantity>
+```
+
+**Examples:**
+```bash
+# Process 5 items for player
+npm run auto-withdraw -- 123456 5
+
+# Process all 50 items
+npm run auto-withdraw -- 123456 50
+```
+
+## Item Categories
+
+**Pets (16):** Frog, Bunny, Owl, Deer, Turtle, Robin, Bee, Butterfly, Monkey, Golden Dragonfly, Unicorn, Bear, Bald Eagle, Raccoon, Black Dragon, Ice Serpent
+
+**Seeds (33):** Carrot, Blueberry, Strawberry, Apple, Tomato, Tulip, Baby Cactus, Bamboo, Cactus, Corn, Horned Melon, Pineapple, Banana, Coconut, Glow Mushroom, Grape, Green Bean, Mango, Mushroom, Acorn, Cherry, Dragon Fruit, Fire Fern, Poison Ivy, Sunflower, Ghost Pepper, Poison Apple, Pomegranate, Venom Spitter, Venus Fly Trap, Dragon's Breath, Hypno Bloom, Moon Bloom
+
+## Rarity Values
+- Common: 1,000
+- Uncommon: 5,000
+- Rare: 10,000
+- Epic: 25,000
+- Legendary: 50,000
+- Mythic: 100,000
+- Super: 250,000
+
+**To change values:** Edit `Backend/scripts/gag2_scraper.js` and run `npm run import-gag2` again
+
+## Frontend
+- Automatically works with all GAG2 items
+- Players can withdraw items through "Withdraw" modal
+- Items appear in marketplace
+- Deposit/withdraw notifications sent to Discord webhook
+
+## Discord Webhook
+All withdrawals post to: `https://discord.com/api/webhooks/1525094341150769276/o58Ow9UjSLvUDB4sybVTAHFsO4P9o77Y0PvnsbV0hd5mNkJat5ife3V4gQbTZOiJr1fu`
+
+Messages include: Username, Roblox ID, Level, Items, Total Value, Timestamp
+
+## Next: Add Values
+You mentioned you'll add values to items. When you're ready:
+1. Update rarity values in `Backend/scripts/gag2_scraper.js`
+2. Run `npm run import-gag2`
+3. Or manually edit items in MongoDB
+
+---
+**All scripts are in `Backend/scripts/` folder**

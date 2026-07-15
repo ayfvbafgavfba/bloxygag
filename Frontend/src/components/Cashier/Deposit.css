@@ -1,0 +1,175 @@
+﻿.ModalBackground {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #1e1834;
+  z-index: 104;
+  .loadingContainer {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 105;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    .loading {
+      width: 50px;
+      height: 50px;
+      border: 6px solid rgb(21, 18, 35);
+      border-radius: 50%;
+      border-top: 6px solid #863aff;
+      animation: spin 0.5s linear infinite;
+    }
+  }
+  .DepositModal {
+    width: 750px;
+    padding: 0px 15px 15px 15px;
+    background: linear-gradient(180deg, #1a0f2e, #0f0620);
+    border-radius: 18px;
+    display: flex;
+    flex-direction: column;
+    margin: 20px;
+    border: 1px solid rgba(134,58,255,0.16);
+    box-shadow: 0 18px 45px rgba(0,0,0,0.18);
+    .Header {
+      display: flex;
+      align-items: center;
+      height: 30px;
+      gap: 6px;
+      padding: 10px 0px;
+      width: 100%;
+      p {
+        color: #c78aff;
+        font-weight: 700;
+        font-size: 17px;
+        position: relative;
+        max-width: 993px;
+      }
+      .Gradient {
+        background: linear-gradient(
+          90deg,
+          #863aff 0%,
+          rgba(134,58,255,0) 100%
+        );
+        height: 1px;
+        width: 100%;
+      }
+      img {
+        width: 18px;
+        height: auto;
+      }
+    }
+    .Methods {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(180deg, #0f0620, #0a0415);
+      box-shadow: inset 0px 18px 29px rgba(0,0,0,0.25);
+      border-radius: 0px 0px 20px 20px;
+      flex: auto;
+      padding: 40px 30px;
+      gap: 40px;
+      max-width: 1150px;
+    }
+
+    .MethodCard {
+      padding: 20px;
+      border-radius: 22px;
+      background: rgba(15, 6, 32, 0.6);
+      border: 1px solid rgba(134,58,255,0.25);
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.35);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .RedeemSection {
+      padding: 0 30px 20px;
+    }
+
+    .RedeemCard {
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(134,58,255,0.18);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      color: #f3e7ff;
+    }
+
+    .RedeemCard h3 {
+      margin: 0;
+      color: #c78aff;
+      font-size: 15px;
+    }
+
+    .RedeemCard p {
+      margin: 0;
+      font-size: 12px;
+      line-height: 1.4;
+      color: #cbb8e8;
+    }
+
+    .RedeemInputRow {
+      display: flex;
+      gap: 8px;
+    }
+
+    .RedeemCard input {
+      flex: 1;
+      border: 1px solid rgba(134,58,255,0.3);
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+      padding: 8px 10px;
+      border-radius: 8px;
+      outline: none;
+      font-size: 13px;
+    }
+
+    .RedeemCard button {
+      border: none;
+      background: linear-gradient(90deg, #863aff, #b05fff);
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .RedeemMessage {
+      font-size: 11px;
+      color: #7df6c5;
+    }
+
+    .MethodCard:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+    }
+
+    .MethodCard img {
+      width: 200px;
+      max-width: 100%;
+      height: auto;
+      display: block;
+      cursor: pointer;
+      -webkit-user-drag: none;
+    }
+  }
+}
+
+@media screen and (max-width: 550px) {
+  .Methods {
+    flex-wrap: wrap;
+    gap: 15px !important;
+    img {
+      width: 90px !important;
+    }
+  }
+}
+

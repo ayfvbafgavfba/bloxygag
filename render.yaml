@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: bloxygag-backend
+    env: node
+    repo: .
+    branch: main
+    buildCommand: cd Backend && npm ci
+    startCommand: cd Backend && node ./bin/www
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: DISCORD_BOT_TOKEN
+        sync: false
+      - key: HCAPTCHA_SECRET
+        sync: false
+      - key: TRANSACTION_SECRET
+        sync: false
+*** End Patch

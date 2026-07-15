@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <defs>
+    <style>
+      .pet-body { fill: #87CEEB; }
+      .pet-text { font-size: 60px; text-anchor: middle; }
+    </style>
+  </defs>
+  <!-- Background -->
+  <rect width="120" height="120" fill="#f0f0f0" rx="10"/>
+  <!-- Pet emoji/placeholder -->
+  <text class="pet-text" x="60" y="75">🐍</text>
+</svg>

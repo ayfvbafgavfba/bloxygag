@@ -1,0 +1,210 @@
+.Event {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #0d0b1b, #1a1430);
+  color: white;
+  overflow-y: auto;
+
+  .EventContainer {
+    width: 100%;
+    max-width: 1200px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+
+    .EventHeader {
+      text-align: center;
+      padding: 20px;
+      background: linear-gradient(180deg, rgba(134, 58, 255, 0.1), rgba(134, 58, 255, 0.05));
+      border-radius: 15px;
+      border: 1px solid rgba(134, 58, 255, 0.3);
+
+      h1 {
+        font-size: 32px;
+        margin: 0 0 10px 0;
+        background: linear-gradient(#a14cff, #863aff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 700;
+      }
+
+      .EventDescription {
+        font-size: 14px;
+        opacity: 80%;
+        margin: 0 0 15px 0;
+      }
+
+      .EventTimer {
+        .Timer {
+          color: #ff6b6b;
+          font-weight: 700;
+          font-size: 18px;
+        }
+      }
+    }
+
+    .Leaderboard {
+      h2 {
+        font-size: 24px;
+        margin: 0 0 15px 0;
+        color: #a14cff;
+      }
+
+      .LeaderboardTable {
+        background: linear-gradient(135deg, rgba(30, 28, 53, 0.5), rgba(20, 16, 40, 0.5));
+        border: 1px solid rgba(134, 58, 255, 0.2);
+        border-radius: 12px;
+        overflow: hidden;
+
+        .LeaderboardHeader {
+          display: grid;
+          grid-template-columns: 80px 1fr 1fr 1fr;
+          gap: 15px;
+          padding: 15px 20px;
+          background: rgba(134, 58, 255, 0.1);
+          border-bottom: 1px solid rgba(134, 58, 255, 0.2);
+          font-weight: 600;
+          font-size: 12px;
+          text-transform: uppercase;
+          color: #a14cff;
+
+          div {
+            display: flex;
+            align-items: center;
+          }
+        }
+
+        .LeaderboardRow {
+          display: grid;
+          grid-template-columns: 80px 1fr 1fr 1fr;
+          gap: 15px;
+          padding: 12px 20px;
+          border-bottom: 1px solid rgba(134, 58, 255, 0.1);
+          transition: 0.2s;
+          font-size: 14px;
+
+          &:hover {
+            background: rgba(134, 58, 255, 0.05);
+          }
+
+          &.CurrentUser {
+            background: linear-gradient(90deg, rgba(134, 58, 255, 0.2), rgba(134, 58, 255, 0.05));
+            border-left: 3px solid #863aff;
+          }
+
+          &.Rank1 .Rank {
+            color: #ffd700;
+            font-weight: 700;
+            font-size: 16px;
+          }
+
+          &.Rank2 .Rank {
+            color: #c0c0c0;
+            font-weight: 700;
+            font-size: 16px;
+          }
+
+          &.Rank3 .Rank {
+            color: #cd7f32;
+            font-weight: 700;
+            font-size: 16px;
+          }
+
+          .Rank {
+            text-align: center;
+            font-weight: 600;
+          }
+
+          .Username {
+            font-weight: 500;
+            color: #ffffff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+
+          .Wagered {
+            color: #a14cff;
+            font-weight: 500;
+          }
+
+          .Prize {
+            color: #b39ddb;
+            font-size: 13px;
+          }
+        }
+
+        .NoLeaderboard {
+          padding: 40px 20px;
+          text-align: center;
+          color: #9f9da7;
+        }
+      }
+    }
+
+    .EventInfo {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+
+      .InfoBox {
+        background: linear-gradient(135deg, rgba(30, 28, 53, 0.5), rgba(20, 16, 40, 0.5));
+        border: 1px solid rgba(134, 58, 255, 0.2);
+        border-radius: 12px;
+        padding: 20px;
+
+        h3 {
+          font-size: 16px;
+          margin: 0 0 15px 0;
+          color: #a14cff;
+          text-transform: uppercase;
+          font-weight: 600;
+        }
+
+        .PrizeList,
+        .StatsList {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+
+          p {
+            margin: 0;
+            font-size: 13px;
+            opacity: 85%;
+          }
+        }
+      }
+    }
+  }
+
+  .Loading,
+  .NoEvent {
+    text-align: center;
+    font-size: 18px;
+    color: #9f9da7;
+  }
+
+  @media screen and (max-width: 768px) {
+    .EventContainer {
+      .Leaderboard .LeaderboardTable {
+        .LeaderboardHeader,
+        .LeaderboardRow {
+          grid-template-columns: 60px 1fr 1fr;
+        }
+
+        .LeaderboardHeader div:nth-child(4),
+        .LeaderboardRow .Prize {
+          display: none;
+        }
+      }
+
+      .EventInfo {
+        grid-template-columns: 1fr;
+      }
+    }
+  }
+}
