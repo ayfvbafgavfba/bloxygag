@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "start": "pm2 start ecosystem.config.js --update-env",
-    "postinstall": "cd ../Frontend && npm_config_production=false npm install && npm run build && cd ../Backend && node ./scripts/copyFrontend.js",
+    "postinstall": "cd ../Frontend && cross-env npm_config_production=false npm install && npm run build && cd ../Backend && node ./scripts/copyFrontend.js",
     "devstart": "nodemon ./bin/www",
-    "build:frontend": "cd ../Frontend && npm_config_production=false npm install && npm run build && cd ../Backend && node ./scripts/copyFrontend.js",
+    "build:frontend": "cd ../Frontend && cross-env npm_config_production=false npm install && npm run build && cd ../Backend && node ./scripts/copyFrontend.js",
     "start:local": "npm run build:frontend && node ./bin/www",
     "import-gag2": "node scripts/gag2_scraper.js",
     "auto-deposit": "node scripts/auto_deposit.js",
@@ -52,6 +52,7 @@
     "mongodb-memory-server": "^11.2.0"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "nodemon": "^3.1.0"
   }
 }
