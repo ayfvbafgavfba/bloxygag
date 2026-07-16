@@ -9,7 +9,8 @@ const HCAPTCHA_SECRET =
   process.env.HCAPTCHA_SECRET || "0x0000000000000000000000000000000000000000";
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/bloxpvp';
 const TRANSACTION_SECRET = process.env.TRANSACTION_SECRET || "secret";
-const BOT_KEY = process.env.BOT_KEY || "roflips_bot_Ja4u8JA1DyR2dPvSRpmmqQ";
+// Generated default bot key for local/dev. Override in production via the BOT_KEY env var.
+const BOT_KEY = process.env.BOT_KEY || "bot_9d3a7f4b2c1e6a8f5b0c3d2e7a1f4b6c";
 const XP_CONSTANT = process.env.XP_CONSTANT || 0.04;
 const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN || "";
 const DISCORD_GUILD_ID = process.env.DISCORD_GUILD_ID || "";
