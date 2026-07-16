@@ -34,7 +34,7 @@ local website = "http://127.0.0.1:6565"
 
 **Or (Production):**
 ```lua
-local website = "https://yourdomain.com"
+local website = "https://bloxgag.org/api"
 ```
 
 ### How It Works

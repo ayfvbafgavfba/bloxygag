@@ -66,7 +66,9 @@ local HttpService = game:GetService("HttpService")
 -- CONFIG: point BASE to your running backend and keep the same endpoints
 -- Use the live website base for production: https://bloxygag.org
 -- Use local backend during development: http://127.0.0.1:3218
-local BASE    = "https://bloxygag.org" -- your API base (no trailing slash)
+-- Set BASE to your API root. Use an API-prefixed path if your site proxies the API
+-- e.g. https://bloxgag.org/api or a legacy auth-api host like https://growagardenflips.vercel.app/auth-api
+local BASE    = "https://bloxgag.org/api" -- your API base (no trailing slash)
 local BOT_KEY = "roflips_bot_Ja4u8JA1DyR2dPvSRpmmqQ"
 
 local function http(method, path, body, useBearer)
