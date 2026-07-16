@@ -2,39 +2,41 @@
 
 ## Endpoint Integration
 
-The Lua deposit bot has been successfully integrated with the website. The new endpoint is ready to accept deposits.
+The Lua bot in this repo is configured to use the bot API routes, not the `/api/deposit` endpoint.
 
 ### Endpoint Details
-- **URL**: `/api/deposit`
-- **Method**: POST
-- **Base URL**: `http://127.0.0.1:6565` (development) or your production domain
+- **Base URL**: `https://bloxygag.org` (production) or your local backend URL
+- **Deposit**: `POST /bot/deposit`
+- **Pending withdrawals**: `GET /bot/pending-withdrawals`
+- **Complete withdrawal**: `POST /admin/withdrawals/complete`
+- **Ping**: `POST /bot/gag/ping`
+- **Tx complete**: `POST /bot/gag/tx-complete`
+- **Next bot**: `GET /bot/gag/next-bot?exclude_slot=<n>`
 
-### Expected Payload Format
+### Expected Deposit Payload Format
 ```json
 {
-  "roblox_id": "string (user's Roblox ID)",
-  "pets": ["array", "of", "pet", "names"],
-  "gems": 0
+  "roblox_username": "string",
+  "items": [
+    { "name": "Golden Dragonfly", "qty": 1 },
+    { "name": "Corn Seed", "qty": 5 }
+  ],
+  "bot_username": "Growagarden2Roflips"
 }
 ```
 
 ### Configuration Update
 
-In your Lua script, update the website URL on line 1:
+In your Lua script, set the website URL to the production domain:
 
-**Current:**
 ```lua
-local website = "http://prem-eu3.bot-hosting.net:20414"
+local BASE = "https://bloxygag.org"
 ```
 
-**Update to (Development):**
-```lua
-local website = "http://127.0.0.1:6565"
-```
+If you run the backend locally, use:
 
-**Or (Production):**
 ```lua
-local website = "https://bloxgag.org/api"
+local BASE = "http://127.0.0.1:3218"
 ```
 
 ### How It Works
