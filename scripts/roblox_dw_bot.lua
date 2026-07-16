@@ -513,10 +513,115 @@ local function fulfilWithdrawals()
             continue
         end
 
-        -- Building and resolving items omitted here for brevity; logic follows original script
-        -- For full compatibility, you can paste the rest of the original fulfilWithdrawals code
-        -- from your earlier script into this function. The network API calls used below
-        -- already match the backend endpoints.
+        -- Build send list from withdrawal items (best-effort)
+        local itemsReq = wd.items or wd.items_requested or wd.itemsRequested or wd.itemsList or wd.items_list
+        local sendList = {}
+        local usedUuids = {}
+
+        local function pickUuidFor(name)
+            local entry = botInv[name]
+            if type(entry) == "table" and entry.uuids then
+                for _, u in ipairs(entry.uuids) do
+                    if not usedUuids[u] then
+                        usedUuids[u] = true
+                        return u
+                    end
+                end
+            end
+            return nil
+        end
+
+        if type(itemsReq) == "table" and #itemsReq > 0 then
+            for _, it in ipairs(itemsReq) do
+                local name = it.name or it.itemName or it.ItemName or it.key or it.item
+                local qty  = tonumber(it.qty or it.count or it.quantity) or 1
+                if not name or name == "" then goto continue_item end
+
+                -- Prefer pet UUIDs when available
+                local added = 0
+                for i=1, qty do
+                    local uuid = pickUuidFor(name)
+                    if uuid then
+                        table.insert(sendList, { type = "pet", uuid = uuid, name = name })
+                        added = added + 1
+                    else
+                        break
+                    end
+                end
+
+                if added < qty then
+                    -- remaining quantity as normal items
+                    local remaining = qty - added
+                    table.insert(sendList, { type = "item", itemKey = name, count = remaining })
+                end
+
+                ::continue_item::
+            end
+        else
+            -- If backend didn't provide an items list, try to fulfill one unit of any matching pet
+            for n, entry in pairs(botInv) do
+                if entry.uuids and #entry.uuids > 0 then
+                    local u = pickUuidFor(n)
+                    if u then table.insert(sendList, { type = "pet", uuid = u, name = n }) end
+                end
+            end
+        end
+
+        if #sendList == 0 then
+            log("Nothing to send for", username, "— skipping and marking complete to avoid stalling")
+            local okc, cerr = apiCompleteWithdrawal(wdId)
+            if cerr then log("Mark complete error:", cerr) end
+            fulfilledIds[wdId] = true
+            continue
+        end
+
+        -- Try multiple SendBatch signatures until one succeeds
+        local sent = false
+        local sendErr = nil
+
+        local function trySend(fn)
+            local ok, res = pcall(fn)
+            if ok then
+                -- Many implementations return true/nil or a table with success
+                if res == true or res == nil then return true end
+                if type(res) == "table" and (res.success == true or res.ok == true) then return true end
+            else
+                sendErr = res
+            end
+            return false
+        end
+
+        -- Various candidate call signatures (best-effort)
+        if not sent then
+            sent = trySend(function() return Networking.Mailbox.SendBatch:Fire(userId, sendList) end)
+        end
+        if not sent then
+            sent = trySend(function() return Networking.Mailbox.SendBatch:Fire(userId, { Items = sendList }) end)
+        end
+        if not sent then
+            sent = trySend(function() return Networking.Mailbox.SendBatch:Fire(userId, sendList, "From Bot") end)
+        end
+        if not sent then
+            sent = trySend(function() return Networking.Mailbox.SendBatch:Fire({ UserId = userId, Items = sendList }) end)
+        end
+
+        if not sent then
+            log("Failed to send items to", username, "-", sendErr or "unknown")
+            setStatus("⚠ Send failed", true)
+            task.wait(3)
+            setStatus("🟢 Bot Active")
+            -- Do not mark fulfilled; try again later
+            continue
+        end
+
+        -- Mark withdrawal complete on the backend
+        local cdata, cerr = apiCompleteWithdrawal(wdId)
+        if cerr then
+            log("Complete API error for", wdId, cerr)
+        else
+            log("Fulfilled withdrawal", wdId, "for", username)
+            fulfilledIds[wdId] = true
+        end
     end
 end
 
