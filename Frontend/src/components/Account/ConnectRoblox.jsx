@@ -20,8 +20,14 @@
         setIsLoading(true);
         if (step === 1) {
           const urlParams = new URLSearchParams(search);
-          const sendUsername = (document.querySelector('input[name="RobloxName"]')?.value || username || '').trim();
-          await fetch(`${config.api}/connect-roblox`, {
+          const sendUsername = username.trim();
+          if (!sendUsername) {
+            toast.error("Please enter your Roblox username.");
+            setIsLoading(false);
+            return;
+          }
+
+          const response = await fetch(`${config.api}/connect-roblox`, {
             headers: {
               Accept: "application/json, text/plain, */*",
               "Content-Type": "application/json",
@@ -29,40 +35,51 @@
             },
             mode: "cors",
             method: "POST",
-            credentials: 'include',
+            credentials: "include",
             body: JSON.stringify({
               username: sendUsername,
               referrer: urlParams.get("referrer"),
             }),
-          }).then(async (res) => {
-            if (res.status === 200) {
-              setDescriptionCode(await res.text());
-              setStep(2);
-            } else {
-              const text = await res.text();
-              try {
-                const data = JSON.parse(text);
-                if (data?.errors) {
-                  data.errors?.forEach((err) => {
-                    toast.error(err.msg);
-                  });
-                } else if (data?.message) {
-                  toast.error(data?.message);
-                } else {
-                  toast.error(text || `Error: ${res.status}`);
-                }
-              } catch {
-                toast.error(text || `Error: ${res.status}`);
-              }
-            }
           });
+
+          const responseText = await response.text();
+          if (response.status === 200) {
+            if (responseText.split(".").length === 3) {
+              setJWT(responseText);
+              toast.success("Login successful");
+              closeModal();
+              window.location.reload();
+            } else {
+              setDescriptionCode(responseText);
+              setStep(2);
+            }
+          } else {
+            try {
+              const data = JSON.parse(responseText);
+              if (data?.errors) {
+                data.errors.forEach((err) => {
+                  toast.error(err.msg);
+                });
+              } else if (data?.message) {
+                toast.error(data.message);
+              } else {
+                toast.error(responseText || `Error: ${response.status}`);
+              }
+            } catch {
+              toast.error(responseText || `Error: ${response.status}`);
+            }
+          }
+
           setIsLoading(false);
         } else {
-          const sendUsername = (document.querySelector('input[name="RobloxName"]')?.value || username || '').trim();
-          const usernameBody = JSON.stringify({
-            username: sendUsername,
-          });
-          await fetch(`${config.api}/connect-roblox`, {
+          const sendUsername = username.trim();
+          if (!sendUsername) {
+            toast.error("Please enter your Roblox username.");
+            setIsLoading(false);
+            return;
+          }
+
+          const response = await fetch(`${config.api}/connect-roblox`, {
             headers: {
               Accept: "application/json, text/plain, */*",
               "Content-Type": "application/json",
@@ -70,29 +87,31 @@
             },
             mode: "cors",
             method: "POST",
-            credentials: 'include',
-            body: usernameBody,
-          }).then(async (res) => {
-            if (res.status === 400) {
-              closeModal();
-              return toast.error("Description does not match");
-            } else if (res.status === 200) {
-              const data = await res.text();
-              if (data && data.split(".").length === 3) {
-                closeModal();
-                setJWT(data);
-                toast("Login Successful");
-                setTimeout(() => {
-                  window.location.reload();
-                }, 1000);
-              } else {
-                toast.error("Login failed. Please try again.");
-              }
-            } else {
-              const text = await res.text();
-              toast.error(text || `Error: ${res.status}`);
-            }
+            credentials: "include",
+            body: JSON.stringify({
+              username: sendUsername,
+            }),
           });
+
+          const responseText = await response.text();
+          if (response.status === 400) {
+            closeModal();
+            toast.error("Description does not match");
+          } else if (response.status === 200) {
+            if (responseText && responseText.split(".").length === 3) {
+              closeModal();
+              setJWT(responseText);
+              toast.success("Login successful");
+              setTimeout(() => {
+                window.location.reload();
+              }, 1000);
+            } else {
+              toast.error("Login failed. Please try again.");
+            }
+          } else {
+            toast.error(responseText || `Error: ${response.status}`);
+          }
+
           setIsLoading(false);
         }
       },
