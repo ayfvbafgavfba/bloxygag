@@ -38,20 +38,20 @@
               setDescriptionCode(await res.text());
               setStep(2);
             } else {
+              const text = await res.text();
               try {
-                const data = await res.json();
-
+                const data = JSON.parse(text);
                 if (data?.errors) {
                   data.errors?.forEach((err) => {
                     toast.error(err.msg);
                   });
+                } else if (data?.message) {
+                  toast.error(data?.message);
                 } else {
-                  if (data?.message) {
-                    toast.error(data?.message);
-                  }
+                  toast.error(text || `Error: ${res.status}`);
                 }
               } catch {
-                toast.error(await res.text());
+                toast.error(text || `Error: ${res.status}`);
               }
             }
           });
@@ -82,6 +82,9 @@
               setTimeout(() => {
                 window.location.reload();
               }, 1000);
+            } else {
+              const text = await res.text();
+              toast.error(text || `Error: ${res.status}`);
             }
           });
           setIsLoading(false);
