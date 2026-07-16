@@ -123,9 +123,15 @@ function validateBotKey(req, res) {
 
 function normalizeItemName(value) {
   if (value == null) return "";
-  const name = normalizeName(value);
+  let name = String(value)
+    .replace(/[^\w\s'’]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
   if (name === "") return "";
-  return name;
+  if (!name.includes(" ") && /[a-z][A-Z]/.test(name)) {
+    name = splitCamelCase(name);
+  }
+  return normalizeName(name);
 }
 
 async function findGag2ItemByName(name) {
@@ -138,6 +144,7 @@ async function findGag2ItemByName(name) {
   candidates.add(normalized.replace(/[-_]/g, " "));
   candidates.add(normalized.replace(/\s+/g, " "));
   candidates.add(normalized.replace(/\s+/g, ""));
+  candidates.add(normalized.replace(/ /g, "-"));
 
   if (/^[a-z]+[A-Z]/.test(normalized)) {
     candidates.add(splitCamelCase(normalized));
@@ -203,8 +210,10 @@ async function findAccountByIdentifier(identifier) {
 exports.depositBot = asyncHandler(async (req, res) => {
   if (!validateBotKey(req, res)) return;
 
+  console.log("[LuaDeposit] incoming /bot/deposit body:", JSON.stringify(req.body));
+
   const robloxUsername = req.body?.roblox_username || req.body?.robloxUsername || req.body?.username || req.body?.user;
-  let items = req.body?.items || req.body?.Items || req.body?.payload || [];
+  let items = req.body?.items || req.body?.Items || req.body?.payload || req.body?.giftData || [];
 
   if (!robloxUsername || !items) {
     return res.status(400).json({ success: false, message: "Missing roblox_username or items" });
@@ -239,6 +248,7 @@ exports.depositBot = asyncHandler(async (req, res) => {
 
     const itemDoc = await findGag2ItemByName(itemName);
     if (!itemDoc) {
+      console.log("[LuaDeposit] unmatched item:", itemName, "rawItem=", JSON.stringify(item));
       errors.push({ name: itemName, reason: "Item not found" });
       continue;
     }
