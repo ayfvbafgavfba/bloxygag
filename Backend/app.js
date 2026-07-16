@@ -131,10 +131,19 @@ app.use(helmet({ contentSecurityPolicy: false }));
 app.use(compression());
 app.use(
   cors({
-    origin: true,
+    origin: (origin, callback) => {
+      // Allow requests from bloxygag.org, localhost, and 127.0.0.1
+      const allowedOrigins = ['https://bloxygag.org', 'http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:3218', 'http://127.0.0.1:3218'];
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, true); // Allow for now, can restrict later
+      }
+    },
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
     exposedHeaders: ["Authorization"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   })
 );
 

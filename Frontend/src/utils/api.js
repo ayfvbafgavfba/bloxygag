@@ -6,7 +6,7 @@ function getJWT () {
 
 function setJWT(token) {
     if (!token) return;
-    Cookies.set('jwt', token, { expires: 3650, path: '/', sameSite: 'lax' });
+    Cookies.set('jwt', token, { expires: 3650, path: '/', sameSite: 'none', secure: true });
     window.localStorage.setItem('jwt', token);
 }
 

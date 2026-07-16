@@ -28,6 +28,7 @@
             },
             mode: "cors",
             method: "POST",
+            credentials: 'include',
             body: JSON.stringify({
               username,
               referrer: urlParams.get("referrer"),
@@ -67,6 +68,7 @@
             },
             mode: "cors",
             method: "POST",
+            credentials: 'include',
             body: usernameBody,
           }).then(async (res) => {
             if (res.status === 400) {

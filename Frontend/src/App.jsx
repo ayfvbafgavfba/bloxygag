@@ -52,6 +52,7 @@ export default function App() {
         "Content-type": "application/json",
         Authorization: `Bearer ${token}`,
       },
+      credentials: 'include',
     })
       .then(async (res) => {
         const data = await res.json().catch(() => null);
