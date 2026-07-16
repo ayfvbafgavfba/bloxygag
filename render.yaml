@@ -19,15 +19,13 @@ services:
         sync: false
       - key: REDIS_URL
         sync: false
+      - key: JWT_SECRET
+        sync: false
       - key: VITE_API_URL
         sync: false
       - key: VITE_SOCKET_URL
         sync: false
       - key: BOT_KEY
-        sync: false
-      - key: VITE_API_URL
-        sync: false
-      - key: VITE_SOCKET_URL
         sync: false
       - key: PORT
         sync: false
