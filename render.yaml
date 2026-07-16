@@ -23,6 +23,14 @@ services:
         sync: false
       - key: VITE_SOCKET_URL
         sync: false
+      - key: BOT_KEY
+        sync: false
+      - key: VITE_API_URL
+        sync: false
+      - key: VITE_SOCKET_URL
+        sync: false
+      - key: PORT
+        sync: false
       - key: APIRONE_API_KEY
         sync: false
       - key: APIRONE_CALLBACK_SECRET
