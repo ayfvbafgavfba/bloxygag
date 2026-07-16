@@ -43,6 +43,14 @@ authHook.setAvatar(
   "https://s3-alpha-sig.figma.com/img/2b34/f172/b5c4249c2ed513c73212e742814f4b54?Expires=1711324800&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=Vpjq2og4gzlTx9nsXfXmBo9FYg3ZkHzKSVKf5gejUHqvUUSJLQpFaYLYowTYFB~gJ32aPnVwnrwP~oqKz2gmcrfjBleISf2gdDhXRdHWAc~mDfU33sf3Y6fKYww1pfkEjC17RAWHV60TUwmjauNfPG1-6jTOjYYwUO-X4nS7Dz1tr9OWjDYe2jAccfV4mApd83RFYASsJbnDNqbd7BCfAbiFR8VKe2jmsSBavksA~cBSWpNb4W4f7Udw7GzRgTTyjSodO3XFDxOiuYbsNHc-cTFa~7AIei7bYzibtLXQM09NXZBKhirk6jUhqb9tHvTiwF37jYYXepZemEmnTyz7qw__"
 );
 
+async function findAccountByRobloxIdOrUsername(userId) {
+  if (!userId) return null;
+  const normalized = String(userId).trim();
+  return await Account.findOne({
+    $or: [{ robloxId: normalized }, { username: normalized }],
+  }).exec();
+}
+
 exports.deposit_mm2 = [
   body("userId").trim().escape(),
   body("secret").trim().escape(),
@@ -54,9 +62,7 @@ exports.deposit_mm2 = [
     let depositedItems = [];
     let errorItems = [];
 
-    const userAccount = await Account.findOne({
-      robloxId: req.body.userId,
-    }).exec();
+    const userAccount = await findAccountByRobloxIdOrUsername(req.body.userId);
 
     if (!userAccount) {
       console.error("Unauthorized deposit request!");
@@ -79,9 +85,13 @@ exports.deposit_mm2 = [
       return res.status(400).send("No User ID provided");
     }
 
-    const actualAccount = await Account.findOne({
-      robloxId: req.body.userId,
-    }).exec();
+    const actualAccount = await findAccountByRobloxIdOrUsername(req.body.userId);
+    if (!actualAccount) {
+      bugHook.send(
+        `Potential bug. User does not exist in database for MM2 deposit: ${req.body.userId}`
+      );
+      return res.status(400).send("Invalid User ID provided");
+    }
 
     if (!req.body.depositItems) {
       console.log(req.body);
@@ -107,7 +117,7 @@ exports.deposit_mm2 = [
         });
         await newInventoryItem.save();
         await Account.updateOne(
-          { robloxId: req.body.userId },
+          { robloxId: actualAccount.robloxId },
           {
             $inc: { deposited: (Number(foundItem.item_value) / 1000) * 5 },
           }
@@ -250,68 +260,6 @@ exports.create_withdraw = [
   }),
 ];
 
-exports.clear_withdraw_mm2 = [
-  body("userId").trim().escape(),
-  body("secret").trim().escape(),
-  asyncHandler(async (req, res, next) => {
-    const session = await mongoose.startSession();
-    try {
-      session.startTransaction();
-      const secret = require("crypto")
-        .createHash("sha256")
-        .update(TRANSACTION_SECRET)
-        .digest("hex");
-
-      const isUserBody = JSON.stringify({
-        userIds: [req.body.userId],
-        excludeBannedUsers: true,
-      });
-
-      let withdrawalItems = [];
-
-      const userInfo = await Account.findOne({ robloxId: req.body.userId })
-        .session(session)
-        .exec();
-
-      const userCheck = await fetch("https://users.roblox.com/v1/users", {
-        headers: {
-          Accept: "application/json, text/plain, */*",
-          "Content-Type": "application/json",
-        },
-        method: "POST",
-        body: isUserBody,
-      }).then(async (res) => {
-        return await res.json();
-      });
-
-      if (req.body.secret != secret) {
-        // Checks for correct secret
-        console.error("Unauthorized deposit request!");
-        authHook.send(
-          `@everyone Unauthorized request made to MM2 Clear Withdrawal API (ID: ${
-            req.body.userId ? req.body.userId : "not found!"
-          })`
-        );
-        await session.abortTransaction();
-        return res.sendStatus(401);
-      }
-
-      if (!req.body.userId) {
-        // Check if user ID was set
-        await session.abortTransaction();
-        bugHook.send(
-          "Potential bug. User ID missing in request! (MM2 Clear Withdraw)"
-        );
-        return res.status(400).send("No User ID provided");
-      }
-
-      if (!userCheck.data[0]) {
-        // Check if user exists, prevents bad req
-        await session.abortTransaction();
-        bugHook.send("Potential exploit? User NOT found! (MM2 Clear Withdraw)");
-        return res.status(400).send("Don't try it buddy :)");
-      }
-
       if (!req.body.clearedItems) {
         await session.abortTransaction();
         bugHook.send(
@@ -347,8 +295,10 @@ exports.clear_withdraw_mm2 = [
 
         const userAcc = await Account.findOne({
           _id: inventoryItem.owner,
-          robloxId: req.body.userId,
-        });
+          $or: [{ robloxId: req.body.userId }, { username: req.body.userId }],
+        })
+          .session(session)
+          .exec();
 
         if (!userAcc) {
           // Check if this is withdrawal request owned by the user
@@ -369,7 +319,7 @@ exports.clear_withdraw_mm2 = [
           }
         );
         await Account.updateOne(
-          { robloxId: req.body.userId },
+          { robloxId: userInfo.robloxId },
           {
             $inc: {
               withdrawn: (Number(inventoryItem.item.item_value) / 1000) * 5,
@@ -403,13 +353,13 @@ exports.get_withdraw_mm2 = asyncHandler(async (req, res, next) => {
     .update(TRANSACTION_SECRET)
     .digest("hex");
 
-  const userData = await Account.findOne({ robloxId: req.body.userId });
+  const userData = await findAccountByRobloxIdOrUsername(req.body.userId);
 
   if (req.body.secret != secret) {
     console.error("Unauthorized request to retrieve withdrawals!");
     authHook.send(
       `@everyone Unauthorized request made to MM2 Withdrawal API (User: ${
-        req.body.userId ? userData.username : "not found!"
+        req.body.userId ? userData?.username : "not found!"
       }) (ID: ${req.body.userId ? req.body.userId : "not found!"})`
     );
     return res.sendStatus(401);
@@ -422,8 +372,13 @@ exports.get_withdraw_mm2 = asyncHandler(async (req, res, next) => {
     return res.status(400).send("No User ID provided");
   }
 
+  if (!userData) {
+    bugHook.send("Potential bug. User ID missing or invalid in MM2 withdrawal retrieval");
+    return res.status(400).send("Invalid User ID provided");
+  }
+
   const activeWithdrawals = await GameWithdrawal.find({
-    robloxId: req.body.userId,
+    robloxId: userData.robloxId,
     game: "MM2",
   }).exec();
   return res.status(200).send(activeWithdrawals);
@@ -469,9 +424,7 @@ exports.deposit_ps99 = [
     let depositedItems = [];
     let errorItems = [];
 
-    const userAccount = await Account.findOne({
-      robloxId: req.body.userId,
-    }).exec();
+    const userAccount = await findAccountByRobloxIdOrUsername(req.body.userId);
 
     if (!userAccount) {
       console.error("Unauthorized deposit request!");
@@ -494,9 +447,13 @@ exports.deposit_ps99 = [
       return res.status(400).send("No User ID provided");
     }
 
-    const actualAccount = await Account.findOne({
-      robloxId: req.body.userId,
-    }).exec();
+    const actualAccount = await findAccountByRobloxIdOrUsername(req.body.userId);
+    if (!actualAccount) {
+      bugHook.send(
+        `Potential bug. User does not exist in database for PS99 deposit: ${req.body.userId}`
+      );
+      return res.status(400).send("Invalid User ID provided");
+    }
 
     if (!req.body.depositItems) {
       console.log(req.body);
@@ -522,7 +479,7 @@ exports.deposit_ps99 = [
         });
         await newInventoryItem.save();
         await Account.updateOne(
-          { robloxId: req.body.userId },
+          { robloxId: actualAccount.robloxId },
           {
             $inc: { deposited: (Number(foundItem.item_value) / 1000) * 5 },
           }
@@ -572,9 +529,14 @@ exports.clear_withdraw_ps99 = [
 
       let withdrawalItems = [];
 
-      const userInfo = await Account.findOne({ robloxId: req.body.userId })
-        .session(session)
-        .exec();
+      const userInfo = await findAccountByRobloxIdOrUsername(req.body.userId);
+      if (!userInfo) {
+        await session.abortTransaction();
+        bugHook.send(
+          `Potential bug. User does not exist in database for PS99 clear withdraw: ${req.body.userId}`
+        );
+        return res.status(400).send("Invalid User ID provided");
+      }
 
       const userCheck = await fetch("https://users.roblox.com/v1/users", {
         headers: {
@@ -652,8 +614,10 @@ exports.clear_withdraw_ps99 = [
 
         const userAcc = await Account.findOne({
           _id: inventoryItem.owner,
-          robloxId: req.body.userId,
-        });
+          $or: [{ robloxId: req.body.userId }, { username: req.body.userId }],
+        })
+          .session(session)
+          .exec();
 
         if (!userAcc) {
           // Check if this is withdrawal request owned by the user
@@ -674,7 +638,7 @@ exports.clear_withdraw_ps99 = [
           }
         );
         await Account.updateOne(
-          { robloxId: req.body.userId },
+          { robloxId: userInfo.robloxId },
           {
             $inc: {
               withdrawn: (Number(inventoryItem.item.item_value) / 1000) * 5,
@@ -708,13 +672,13 @@ exports.get_withdraw_ps99 = asyncHandler(async (req, res, next) => {
     .update(TRANSACTION_SECRET)
     .digest("hex");
 
-  const userData = await Account.findOne({ robloxId: req.body.userId });
+  const userData = await findAccountByRobloxIdOrUsername(req.body.userId);
 
   if (req.body.secret != secret) {
     console.error("Unauthorized request to retrieve withdrawals!");
     authHook.send(
       `@everyone Unauthorized request made to PS99 Withdrawal API (User: ${
-        req.body.userId ? userData.username : "not found!"
+        req.body.userId ? userData?.username : "not found!"
       }) (ID: ${req.body.userId ? req.body.userId : "not found!"})`
     );
     return res.sendStatus(401);
@@ -727,8 +691,13 @@ exports.get_withdraw_ps99 = asyncHandler(async (req, res, next) => {
     return res.status(400).send("No User ID provided");
   }
 
+  if (!userData) {
+    bugHook.send("Potential bug. User ID missing or invalid in PS99 withdrawal retrieval");
+    return res.status(400).send("Invalid User ID provided");
+  }
+
   const activeWithdrawals = await GameWithdrawal.find({
-    robloxId: req.body.userId,
+    robloxId: userData.robloxId,
     game: "PS99",
   }).exec();
   return res.status(200).send(activeWithdrawals);
