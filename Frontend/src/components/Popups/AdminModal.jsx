@@ -807,6 +807,38 @@ export default function AdminModal({ closeModal }) {
                 </div>
               )}
 
+              {activeSection === "withdrawals" && (
+                <div className="SectionContent">
+                  <h3>Pending Withdrawals ({withdrawals.pending.length})</h3>
+                  {withdrawals.pending.length === 0 ? (
+                    <p className="NoUsers">No pending withdrawals</p>
+                  ) : (
+                    <div className="UsersList">
+                      {withdrawals.pending.map((w) => (
+                        <div key={w.id} className="BannedUser">
+                          <span className="Username">{w.robloxId} — {w.item_name}</span>
+                          <button className="UnbanBtn" onClick={() => handleCompleteWithdrawal(w.id)}>Complete</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <h3>Manual Withdrawals ({withdrawals.manual.length})</h3>
+                  {withdrawals.manual.length === 0 ? (
+                    <p className="NoUsers">No manual withdrawals</p>
+                  ) : (
+                    <div className="UsersList">
+                      {withdrawals.manual.map((w) => (
+                        <div key={w.id} className="BannedUser">
+                          <span className="Username">{w.robloxId} — {w.item_name}</span>
+                          <button className="UnbanBtn" onClick={() => handleCompleteWithdrawal(w.id)}>Mark Completed</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {activeSection === "items" && (
                 <div className="SectionContent">
                   <div className="ActionGroup">
