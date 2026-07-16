@@ -47,6 +47,7 @@ const promoCodeController = require('../controllers/promoCodeController');
 const disciplinaryController = require('../controllers/disciplinaryController');
 const adminController = require('../controllers/adminController');
 const eventController = require("../controllers/eventController");
+const { BOT_KEY } = require('../config');
 const { checkBanned, checkMuted } = require('../middleware/disciplinaryMiddleware');
 
 
@@ -102,7 +103,21 @@ router.post("/withdraw/mm2/clear", cashierController.clear_withdraw_ps99);
 // BOT / GAG2 ROUTES
 router.post("/bot/deposit", botController.depositBot);
 router.get("/bot/pending-withdrawals", botController.pendingWithdrawals);
-router.post("/admin/withdrawals/complete", accountController.authenticateToken, adminController.complete_withdrawal);
+
+// Allow either bot-key auth (`x-bot-key` or Bearer) OR admin JWT for completing withdrawals.
+function botOrAdminAuth(req, res, next) {
+  const authHeader = req.headers.authorization || req.headers.Authorization;
+  let key = null;
+  if (typeof authHeader === 'string' && authHeader.toLowerCase().startsWith('bearer ')) {
+    key = authHeader.slice(7).trim();
+  } else if (req.headers['x-bot-key']) {
+    key = req.headers['x-bot-key'];
+  }
+  if (key && key === BOT_KEY) return next();
+  return accountController.authenticateToken(req, res, next);
+}
+
+router.post("/admin/withdrawals/complete", botOrAdminAuth, adminController.complete_withdrawal);
 router.get("/admin/withdrawals", accountController.authenticateToken, adminController.get_withdrawals);
 router.post("/bot/gag/ping", botController.ping);
 router.post("/bot/gag/tx-complete", botController.txComplete);
