@@ -124,15 +124,21 @@ exports.connect_roblox = [
       return res.status(400).send(errors.array());
     }
 
-    let userId = await noblox.getIdFromUsername(req.body.username);
-    const accountData = await Account.findOne({ robloxId: userId });
-    const ownerUsername = OWNER_ROBLOX_USERNAME?.trim()?.toLowerCase();
-    const ownerUserId = OWNER_ROBLOX_ID?.trim();
-    const isOwner =
-      (ownerUserId && ownerUserId === String(userId)) ||
-      (ownerUsername && req.body.username.trim().toLowerCase() === ownerUsername);
+    try {
+      let userId = await noblox.getIdFromUsername(req.body.username);
+      
+      if (!userId) {
+        return res.status(404).send("Invalid Username");
+      }
 
-    let randomDescription;
+      const accountData = await Account.findOne({ robloxId: userId });
+      const ownerUsername = OWNER_ROBLOX_USERNAME?.trim()?.toLowerCase();
+      const ownerUserId = OWNER_ROBLOX_ID?.trim();
+      const isOwner =
+        (ownerUserId && ownerUserId === String(userId)) ||
+        (ownerUsername && req.body.username.trim().toLowerCase() === ownerUsername);
+
+      let randomDescription;
 
     if (accountData != null) {
       if (isOwner && accountData.rank !== "Owner") {
@@ -279,6 +285,13 @@ exports.connect_roblox = [
       userStore[userId] = { descriptionSet: true };
       console.log("await account save is called here the page is reloading? maybe here");
       res.status(200).send(randomDescription);
+    }
+    } catch (error) {
+      console.error("Error in connect_roblox:", error.message);
+      return res.status(500).json({ 
+        success: false, 
+        message: error.message || "Internal Server Error" 
+      });
     }
   }),
 ];
