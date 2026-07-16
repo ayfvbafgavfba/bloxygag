@@ -83,9 +83,21 @@ function escapeRegExp(value) {
   return String(value).replace(/[.*+?^${}()|[\\]\\]/g, "\\$&");
 }
 
+function splitCamelCase(value) {
+  if (value == null) return "";
+  return String(value)
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/([A-Z])([A-Z][a-z])/g, "$1 $2");
+}
+
 function normalizeName(value) {
   if (value == null) return "";
-  return String(value).replace(/\s+/g, " ").trim();
+  const text = String(value).replace(/\s+/g, " ").trim();
+  if (text === "") return "";
+  if (!text.includes(" ") && /[a-z][A-Z]/.test(text)) {
+    return splitCamelCase(text);
+  }
+  return text;
 }
 
 function normalizeKey(value) {
@@ -109,31 +121,59 @@ function validateBotKey(req, res) {
   return true;
 }
 
+function normalizeItemName(value) {
+  if (value == null) return "";
+  const name = normalizeName(value);
+  if (name === "") return "";
+  return name;
+}
+
 async function findGag2ItemByName(name) {
-  const normalized = normalizeName(name);
+  const normalized = normalizeItemName(name);
   if (!normalized) return null;
 
-  const candidates = [normalized];
   const lower = normalizeKey(normalized);
+  const candidates = new Set([normalized]);
+
+  candidates.add(normalized.replace(/[-_]/g, " "));
+  candidates.add(normalized.replace(/\s+/g, " "));
+  candidates.add(normalized.replace(/\s+/g, ""));
+
+  if (/^[a-z]+[A-Z]/.test(normalized)) {
+    candidates.add(splitCamelCase(normalized));
+  }
 
   if (lower.startsWith("big ")) {
-    candidates.push(normalized.slice(4));
+    candidates.add(normalized.slice(4));
   }
   if (lower.startsWith("huge ")) {
-    candidates.push(normalized.slice(5));
+    candidates.add(normalized.slice(5));
   }
   if (lower.startsWith("mega ")) {
-    candidates.push(normalized.slice(5));
+    candidates.add(normalized.slice(5));
   }
   if (lower.startsWith("rainbow ")) {
-    candidates.push(normalized.slice(8));
+    candidates.add(normalized.slice(8));
   }
   if (!lower.endsWith(" seed")) {
-    candidates.push(`${normalized} Seed`);
+    candidates.add(`${normalized} Seed`);
   }
 
   for (const candidate of candidates) {
     const regex = new RegExp(`^${escapeRegExp(candidate)}$`, "i");
+    const item = await Item.findOne({
+      game: "GAG2",
+      $or: [
+        { item_name: { $regex: regex } },
+        { display_name: { $regex: regex } },
+      ],
+    }).exec();
+    if (item) return item;
+  }
+
+  // Last resort: partial match on cleaned name
+  for (const candidate of candidates) {
+    const regex = new RegExp(escapeRegExp(candidate), "i");
     const item = await Item.findOne({
       game: "GAG2",
       $or: [
@@ -163,11 +203,18 @@ async function findAccountByIdentifier(identifier) {
 exports.depositBot = asyncHandler(async (req, res) => {
   if (!validateBotKey(req, res)) return;
 
-  const robloxUsername = req.body?.roblox_username;
-  const items = req.body?.items;
+  const robloxUsername = req.body?.roblox_username || req.body?.robloxUsername || req.body?.username || req.body?.user;
+  let items = req.body?.items || req.body?.Items || req.body?.payload || [];
 
-  if (!robloxUsername || !Array.isArray(items)) {
+  if (!robloxUsername || !items) {
     return res.status(400).json({ success: false, message: "Missing roblox_username or items" });
+  }
+  if (!Array.isArray(items)) {
+    if (typeof items === "object" && items !== null) {
+      items = Object.values(items);
+    } else {
+      return res.status(400).json({ success: false, message: "Invalid items format" });
+    }
   }
 
   const account = await findAccountByIdentifier(robloxUsername);
@@ -181,8 +228,10 @@ exports.depositBot = asyncHandler(async (req, res) => {
   const errors = [];
 
   for (const item of items) {
-    const itemName = normalizeName(item.name || item.display_name || item.item_name || item.ItemName || "");
-    const qty = Number(item.qty ?? item.count ?? 1) || 1;
+    const itemName = normalizeItemName(
+      item.name || item.display_name || item.item_name || item.ItemName || item.displayName || item.ItemName || item.item_key || item.itemKey || item.key || item.item
+    );
+    const qty = Number(item.qty ?? item.count ?? item.quantity ?? 1) || 1;
     if (!itemName || qty <= 0) {
       errors.push({ name: itemName, reason: "Invalid item data" });
       continue;
