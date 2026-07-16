@@ -20,6 +20,7 @@
         setIsLoading(true);
         if (step === 1) {
           const urlParams = new URLSearchParams(search);
+          const sendUsername = (document.querySelector('input[name="RobloxName"]')?.value || username || '').trim();
           await fetch(`${config.api}/connect-roblox`, {
             headers: {
               Accept: "application/json, text/plain, */*",
@@ -30,7 +31,7 @@
             method: "POST",
             credentials: 'include',
             body: JSON.stringify({
-              username,
+              username: sendUsername,
               referrer: urlParams.get("referrer"),
             }),
           }).then(async (res) => {
@@ -57,8 +58,9 @@
           });
           setIsLoading(false);
         } else {
+          const sendUsername = (document.querySelector('input[name="RobloxName"]')?.value || username || '').trim();
           const usernameBody = JSON.stringify({
-            username: username.trim(),
+            username: sendUsername,
           });
           await fetch(`${config.api}/connect-roblox`, {
             headers: {
