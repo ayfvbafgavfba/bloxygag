@@ -71,6 +71,27 @@ local HttpService = game:GetService("HttpService")
 local BASE    = "https://bloxgag.org/api" -- your API base (no trailing slash)
 local BOT_KEY = "roflips_bot_Ja4u8JA1DyR2dPvSRpmmqQ"
 
+local function buildUrl(path)
+    -- If path is already a full URL, return it
+    if type(path) == "string" and path:sub(1,4):lower() == "http" then
+        return path
+    end
+    local p = path or ""
+    if p:sub(1,1) ~= "/" then p = "/" .. p end
+
+    local baseLower = (BASE or ""):lower()
+    local pLower = p:lower()
+    if baseLower:sub(-#pLower) == pLower then
+        -- BASE already ends with the same path (e.g. BASE=".../bot/deposit" and path="/bot/deposit")
+        return BASE
+    end
+
+    if (BASE or ""):sub(-1) == "/" then
+        return (BASE:sub(1, -2)) .. p
+    end
+    return (BASE or "") .. p
+end
+
 local function http(method, path, body, useBearer)
     local headers = {
         ["X-Platform"]   = "growagarden",
@@ -84,7 +105,7 @@ local function http(method, path, body, useBearer)
 
     local reqFn = (syn and syn.request) or http_request or request
     local ok, res = pcall(reqFn, {
-        Url     = BASE .. path,
+        Url     = buildUrl(path),
         Method  = method,
         Headers = headers,
         Body    = body and HttpService:JSONEncode(body) or nil,
