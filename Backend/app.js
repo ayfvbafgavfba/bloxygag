@@ -15,7 +15,6 @@ const crypto = require("crypto");
 const { initSocket } = require("./utils/socket");
 const { Webhook } = require("discord-webhook-node");
 const { MONGODB_URI } = require("./config");
-const { MongoMemoryReplSet } = require("mongodb-memory-server");
 const compression = require("compression");
 const utils = require("./utils/events");
 const cron = require("node-cron");
@@ -32,10 +31,7 @@ withdrawCryptoHook.setAvatar(
 const app = express();
 
 mongoose.set("strictQuery", "false");
-// const dev_db = "mongodb+srv://admin:admin@cluster.9atdqpo.mongodb.net/?retryWrites=true&w=majority&appName=cluster";
-const dev_db =
-  "mongodb://127.0.0.1:27017/bloxpvp";
-const mongoDB = MONGODB_URI || dev_db;
+const mongoDB = MONGODB_URI;
 
 const appReady = main();
 appReady.catch((err) => console.log(err));
@@ -97,19 +93,10 @@ async function main() {
     }
   } catch (error) {
     console.error("Primary MongoDB connection failed:", error.message);
-
-    if (process.env.NODE_ENV === "production") {
-      console.error(
-        "Production requires a real MongoDB database. Exiting instead of using in-memory fallback."
-      );
-      process.exit(1);
-    }
-
-    console.log("Starting in-memory MongoDB fallback for development...");
-    const replSet = await MongoMemoryReplSet.create({ replSet: { count: 1 } });
-    const memoryUri = replSet.getUri();
-    await mongoose.connect(memoryUri);
-    console.log("Connected to in-memory MongoDB replica set:", memoryUri);
+    console.error(
+      "A real MongoDB database is required. Please set MONGODB_URI to a valid connection string."
+    );
+    process.exit(1);
   }
 
   // Load routes AFTER MongoDB connection is established
