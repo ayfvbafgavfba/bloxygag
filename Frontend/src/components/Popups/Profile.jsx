@@ -12,6 +12,7 @@ import { m } from "framer-motion";
 import config from "../../config";
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
+import numeral from "numeral";
 
 export default function Profile({ closeModal, userId }) {
   const [data, setData] = useState(null);

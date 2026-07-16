@@ -103,3 +103,54 @@ exports.impersonateUser = asyncHandler(async (req, res) => {
   const token = jwt.sign({ id: account._id, username: account.username }, JWT_SECRET);
   return res.json({ success: true, token });
 });
+
+// Admin: list withdrawals (pending/manual/all)
+exports.get_withdrawals = asyncHandler(async (req, res) => {
+  const GameWithdrawal = require('../models/gameWithdrawal');
+  const withdrawals = await GameWithdrawal.find({ game: 'GAG2' })
+    .populate({ path: 'inventoryItem', populate: { path: 'item' } })
+    .exec();
+
+  const pending = [];
+  const manual = [];
+  const all = [];
+
+  for (const wd of withdrawals) {
+    const itemName = (wd.item_name || '').toString();
+    const lower = itemName.toLowerCase();
+    const isManual = lower.startsWith('big ') || lower.startsWith('huge ') || lower.startsWith('mega ') || lower.startsWith('rainbow ');
+    const rec = {
+      id: String(wd._id),
+      robloxId: wd.robloxId,
+      item_name: wd.item_name,
+      inventoryItemId: wd.inventoryItem?._id ? String(wd.inventoryItem._id) : null,
+    };
+    all.push(rec);
+    if (isManual) manual.push(rec);
+    else pending.push(rec);
+  }
+
+  return res.json({ success: true, pending, manual, all });
+});
+
+// Admin: complete a withdrawal (manual action via admin panel)
+exports.complete_withdrawal = asyncHandler(async (req, res) => {
+  const id = req.body?.id;
+  if (!id) return res.status(400).json({ success: false, message: 'Missing id' });
+
+  const GameWithdrawal = require('../models/gameWithdrawal');
+  const wd = await GameWithdrawal.findById(id).populate({ path: 'inventoryItem', populate: { path: 'item' } }).exec();
+  if (!wd) return res.status(404).json({ success: false, message: 'Withdrawal not found' });
+
+  if (wd.inventoryItem?._id) {
+    await require('../models/inventoryItem').updateOne({ _id: wd.inventoryItem._id }, { locked: true });
+  }
+
+  if (wd.inventoryItem?.item?.item_value) {
+    const itemValue = Number(wd.inventoryItem.item.item_value) || 0;
+    await Account.updateOne({ robloxId: wd.robloxId }, { $inc: { withdrawn: itemValue } });
+  }
+
+  await GameWithdrawal.findByIdAndDelete(id);
+  return res.json({ success: true });
+});

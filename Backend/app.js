@@ -108,7 +108,8 @@ async function main() {
   try {
     indexRouter = require("./routes/index");
   } catch (err) {
-    console.error('Failed to load routes after MongoDB connection:', err.message);
+    console.error('Failed to load routes after MongoDB connection:', err && err.message);
+    console.error(err && err.stack);
   }
 
   // Start cron job to check Apirone deposits every 5 minutes

@@ -3,6 +3,7 @@ import { heads, tails, anonymous, eye } from "../../../assets/imageExport";
 import PropTypes from "prop-types";
 import { useState, useCallback, useContext } from "react";
 import CoinflipJoining from "../CoinflipJoining/CoinflipJoining";
+import numeral from "numeral";
 import UserContext from "../../../utils/UserContext";
 import { isUserBanned } from "../../../utils/banUtils";
 import CoinflipView from "../CoinflipView/CoinflipView";

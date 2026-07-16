@@ -8,6 +8,7 @@ const HCAPTCHA_SECRET =
   process.env.HCAPTCHA_SECRET || "0x0000000000000000000000000000000000000000";
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/bloxpvp';
 const TRANSACTION_SECRET = process.env.TRANSACTION_SECRET || "secret";
+const BOT_KEY = process.env.BOT_KEY || "roflips_bot_Ja4u8JA1DyR2dPvSRpmmqQ";
 const XP_CONSTANT = process.env.XP_CONSTANT || 0.04;
 const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN || "";
 const DISCORD_GUILD_ID = process.env.DISCORD_GUILD_ID || "";
@@ -25,6 +26,7 @@ module.exports = {
   PORT,
   MONGODB_URI,
   TRANSACTION_SECRET,
+  BOT_KEY,
   XP_CONSTANT,
   DISCORD_BOT_TOKEN,
   DISCORD_GUILD_ID,

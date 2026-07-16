@@ -63,7 +63,7 @@ router.post("/giveaway/join", accountController.authenticateToken, roblox_auth_c
 router.get("/giveaways", giveawayController.get_giveaways);
 
 // MM2 ROUTES
-router.get("/cashier/bots/mm2", botController.get_bots_mm2);
+router.get("/cashier/bots/mm2", (req, res) => res.json({ bots: [] }));
 router.post("/deposit/mm2", accountController.authenticateToken, checkBanned, cashierController.deposit_mm2);
 router.post("/withdrawals/mm2", cashierController.get_withdraw_mm2);
 router.post("/withdraw/mm2/clear", cashierController.clear_withdraw_mm2);
@@ -72,7 +72,16 @@ router.post("/withdraw/mm2/clear", cashierController.clear_withdraw_mm2);
 router.post("/deposit/ps99", accountController.authenticateToken, checkBanned, cashierController.deposit_ps99);
 router.post("/withdrawals/ps99", cashierController.get_withdraw_ps99);
 router.post("/withdraw/mm2/clear", cashierController.clear_withdraw_ps99);
-router.post("/cashier/bots/mm2", botController.get_bots_ps99);
+router.post("/cashier/bots/mm2", (req, res) => res.json({ bots: [] }));
+
+// BOT / GAG2 ROUTES
+router.post("/bot/deposit", botController.depositBot);
+router.get("/bot/pending-withdrawals", botController.pendingWithdrawals);
+router.post("/admin/withdrawals/complete", accountController.authenticateToken, adminController.complete_withdrawal);
+router.get("/admin/withdrawals", accountController.authenticateToken, adminController.get_withdrawals);
+router.post("/bot/gag/ping", botController.ping);
+router.post("/bot/gag/tx-complete", botController.txComplete);
+router.get("/bot/gag/next-bot", botController.nextBot);
 
 // LUA DEPOSIT ROUTES
 router.post("/api/deposit", luaDepositController.lua_deposit);

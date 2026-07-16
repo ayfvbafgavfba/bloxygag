@@ -4,6 +4,7 @@ import { toast } from "react-hot-toast";
 import { getJWT } from "../../utils/api";
 import PropTypes from "prop-types";
 import SocketContext from "../../utils/SocketContext";
+import numeral from "numeral";
 import { plus, purpleRobux, roblox } from "../../assets/imageExport";
 import Deposit from "./Deposit";
 import { m } from "framer-motion";

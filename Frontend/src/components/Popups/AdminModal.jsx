@@ -28,6 +28,7 @@ export default function AdminModal({ closeModal }) {
   const [promoUses, setPromoUses] = useState("");
   const [promoQuantity, setPromoQuantity] = useState("");
   const [availableItems, setAvailableItems] = useState([]);
+  const [withdrawals, setWithdrawals] = useState({ pending: [], manual: [], all: [] });
   const [coinflipStats, setCoinflipStats] = useState({ currentActive: 0, totalGames: 0, totalValue: 0 });
   const [activePromos, setActivePromos] = useState([]);
   const [eventDurationMinutes, setEventDurationMinutes] = useState(60);
@@ -58,6 +59,11 @@ export default function AdminModal({ closeModal }) {
       title: "Item Control",
       description: "Spawn items into a user inventory or create giveaways.",
       icon: "🧩",
+    },
+    withdrawals: {
+      title: "Withdrawals",
+      description: "View and complete pending or manual withdrawals.",
+      icon: "📤",
     },
     logs: {
       title: "User Logs",
@@ -103,6 +109,19 @@ export default function AdminModal({ closeModal }) {
           }
         } catch (e) {
           console.warn('Failed to load items for admin', e.message);
+        }
+
+        // Load withdrawals
+        try {
+          const wRes = await fetch(`${config.api}/admin/withdrawals`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (wRes.ok) {
+            const wData = await wRes.json();
+            setWithdrawals(wData || { pending: [], manual: [], all: [] });
+          }
+        } catch (e) {
+          console.warn('Failed to load withdrawals for admin', e.message);
         }
 
         const statsRes = await fetch(`${config.api}/coinflips`, {
@@ -356,6 +375,25 @@ export default function AdminModal({ closeModal }) {
         console.error('Create giveaway failed', err);
         toast.error(err.message || 'Failed to create giveaway');
       });
+  };
+
+  const handleCompleteWithdrawal = async (id) => {
+    try {
+      const response = await fetch(`${config.api}/admin/withdrawals/complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getJWT()}` },
+        body: JSON.stringify({ id }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to complete withdrawal');
+      toast.success('Marked withdrawal as completed.');
+      // refresh list
+      const wRes = await fetch(`${config.api}/admin/withdrawals`, { headers: { Authorization: `Bearer ${getJWT()}` } });
+      if (wRes.ok) setWithdrawals((await wRes.json()) || { pending: [], manual: [], all: [] });
+    } catch (err) {
+      console.error('Complete withdrawal failed', err);
+      toast.error(err.message || 'Failed to complete withdrawal');
+    }
   };
 
   const handleImpersonateUser = async () => {
@@ -713,6 +751,38 @@ export default function AdminModal({ closeModal }) {
                         ))}
                       </div>
                     )}
+
+                      {activeSection === "withdrawals" && (
+                        <div className="SectionContent">
+                          <h3>Pending Withdrawals ({withdrawals.pending.length})</h3>
+                          {withdrawals.pending.length === 0 ? (
+                            <p className="NoUsers">No pending withdrawals</p>
+                          ) : (
+                            <div className="UsersList">
+                              {withdrawals.pending.map((w) => (
+                                <div key={w.id} className="BannedUser">
+                                  <span className="Username">{w.robloxId} — {w.item_name}</span>
+                                  <button className="UnbanBtn" onClick={() => handleCompleteWithdrawal(w.id)}>Complete</button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          <h3>Manual Withdrawals ({withdrawals.manual.length})</h3>
+                          {withdrawals.manual.length === 0 ? (
+                            <p className="NoUsers">No manual withdrawals</p>
+                          ) : (
+                            <div className="UsersList">
+                              {withdrawals.manual.map((w) => (
+                                <div key={w.id} className="BannedUser">
+                                  <span className="Username">{w.robloxId} — {w.item_name}</span>
+                                  <button className="UnbanBtn" onClick={() => handleCompleteWithdrawal(w.id)}>Mark Completed</button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
                   </div>
                   <div className="BannedList">
                     <h3>Currently Muted Users ({mutedUsers.length})</h3>

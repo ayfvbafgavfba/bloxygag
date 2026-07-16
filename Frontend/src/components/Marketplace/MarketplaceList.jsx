@@ -1,6 +1,7 @@
 import "./MarketplaceList.css";
 import { useState, useCallback, useEffect, useContext } from "react";
 import { toast } from "react-hot-toast";
+import numeral from "numeral";
 import { getJWT } from "../../utils/api";
 import PropTypes from "prop-types";
 import SocketContext from "../../utils/SocketContext";

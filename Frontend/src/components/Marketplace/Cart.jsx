@@ -1,5 +1,6 @@
 import "./Cart.css";
 import PropTypes from "prop-types";
+import numeral from "numeral";
 import {
   emptyCart,
   cartGradient,
