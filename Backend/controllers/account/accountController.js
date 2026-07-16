@@ -130,7 +130,7 @@ exports.connect_roblox = [
       const userId = await noblox.getIdFromUsername(req.body.username);
 
       if (!userId) {
-        return res.status(404).send("Invalid Username");
+        return res.status(404).json({ success: false, message: "Invalid Username" });
       }
 
       const accountData = await Account.findOne({ robloxId: userId });
@@ -268,7 +268,7 @@ exports.connect_roblox = [
 exports.roblox_auth_check = asyncHandler(async (req, res, next) => {
   const account = await Account.findOne({ _id: req.user.id });
   if (!account.robloxId) {
-    return res.status(401).send("You have not connected your Roblox account");
+    return res.status(401).json({ success: false, message: "You have not connected your Roblox account" });
   }
   next();
 });
@@ -279,7 +279,7 @@ exports.get_profile = [
     const userData = await Account.findOne({ robloxId: req.body.userId });
 
     if (!userData) {
-      return res.status(404).send("User was not found");
+      return res.status(404).json({ success: false, message: "User was not found" });
     }
 
     const nextLevel = Math.ceil(userData.level);
