@@ -97,7 +97,15 @@ async function main() {
     }
   } catch (error) {
     console.error("Primary MongoDB connection failed:", error.message);
-    console.log("Starting in-memory MongoDB fallback...");
+
+    if (process.env.NODE_ENV === "production") {
+      console.error(
+        "Production requires a real MongoDB database. Exiting instead of using in-memory fallback."
+      );
+      process.exit(1);
+    }
+
+    console.log("Starting in-memory MongoDB fallback for development...");
     const replSet = await MongoMemoryReplSet.create({ replSet: { count: 1 } });
     const memoryUri = replSet.getUri();
     await mongoose.connect(memoryUri);
