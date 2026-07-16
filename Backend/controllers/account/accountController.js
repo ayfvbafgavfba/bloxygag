@@ -13,11 +13,13 @@ const {
   OWNER_ROBLOX_ID,
   OWNER_ROBLOX_USERNAME,
 } = require("../../config");
-let userStore = []
 dotenv.config();
 
 exports.authenticateToken = asyncHandler(async (req, res, next) => {
-  const token = req.headers["authorization"]?.split(" ")[1];
+  const authHeader = req.headers["authorization"];
+  const token = authHeader?.startsWith("Bearer ")
+    ? authHeader.split(" ")[1]
+    : req.cookies?.jwt || null;
 
   if (!token) return res.sendStatus(401);
 
@@ -125,8 +127,8 @@ exports.connect_roblox = [
     }
 
     try {
-      let userId = await noblox.getIdFromUsername(req.body.username);
-      
+      const userId = await noblox.getIdFromUsername(req.body.username);
+
       if (!userId) {
         return res.status(404).send("Invalid Username");
       }
@@ -138,74 +140,6 @@ exports.connect_roblox = [
         (ownerUserId && ownerUserId === String(userId)) ||
         (ownerUsername && req.body.username.trim().toLowerCase() === ownerUsername);
 
-      let randomDescription;
-
-    if (accountData != null) {
-      if (isOwner && accountData.rank !== "Owner") {
-        await Account.updateOne({ robloxId: userId }, { rank: "Owner" });
-      }
-
-      if (!isOwner && accountData.rank === "Owner") {
-        // preserve owner status if this account was previously promoted.
-        // If an owner account logs in with a different username case, still keep the rank.
-        await Account.updateOne({ robloxId: userId }, { rank: "Owner" });
-      }
-
-      if (userStore[userId]?.descriptionSet === true) {
-        delete userStore[userId];
-
-        const userData = await noblox.getPlayerInfo(userId);
-        const userThumbnail = await noblox.getPlayerThumbnail(
-          userId,
-          420,
-          "png",
-          false,
-          "Headshot"
-        );
-
-        if (userData.blurb == accountData.description) {
-          console.log("Phrase and description are the same :D ");
-
-          randomDescription = generateRandomDescription();
-
-          await Account.updateOne({ robloxId: userId }, { description: randomDescription });
-
-          await Account.updateOne(
-            { username: req.body.username },
-            {
-              $push: {
-                ips: {
-                  ip: req.ip,
-                },
-              },
-              thumbnail: userThumbnail[0].imageUrl,
-            }
-          );
-
-          const token = jwt.sign({ id: accountData._id, username: accountData.username }, JWT_SECRET);
-          console.log('Roblox' + token);
-          return res.send(token);
-        } else if (userData.blurb != accountData.description) {
-          delete userStore[userId];
-          return res.status(400).send("Description does not match");
-        }
-      } else {
-        randomDescription = generateRandomDescription();
-
-        await Account.updateOne({ robloxId: userId }, { description: randomDescription });
-
-        userStore[userId] = { descriptionSet: true };
-
-        return res.status(200).send(randomDescription);
-      }
-    } else {
-      if (userId == null) {
-        console.log(`id: ${userId}, nameEntered: ${req.body.username}`);
-        return res.status(404).send("Invalid Username");
-      }
-
-      delete userStore[userId];
-
       const userData = await noblox.getPlayerInfo(userId);
       const userThumbnail = await noblox.getPlayerThumbnail(
         userId,
@@ -214,8 +148,47 @@ exports.connect_roblox = [
         false,
         "Headshot"
       );
-      randomDescription = generateRandomDescription();
 
+      if (accountData) {
+        if (isOwner && accountData.rank !== "Owner") {
+          await Account.updateOne({ robloxId: userId }, { rank: "Owner" });
+        }
+
+        if (!isOwner && accountData.rank === "Owner") {
+          await Account.updateOne({ robloxId: userId }, { rank: "Owner" });
+        }
+
+        if (userData.blurb === accountData.description) {
+          const token = jwt.sign(
+            { id: accountData._id, username: accountData.username },
+            JWT_SECRET
+          );
+
+          await Account.updateOne(
+            { robloxId: userId },
+            {
+              $push: { ips: { ip: req.ip } },
+              thumbnail: userThumbnail[0].imageUrl,
+            }
+          );
+
+          return res.status(200).send(token);
+        }
+
+        const randomDescription = generateRandomDescription();
+        await Account.updateOne(
+          { robloxId: userId },
+          {
+            description: randomDescription,
+            $push: { ips: { ip: req.ip } },
+            thumbnail: userThumbnail[0].imageUrl,
+          }
+        );
+
+        return res.status(200).send(randomDescription);
+      }
+
+      const randomDescription = generateRandomDescription();
       const checkReferrer = await Account.findOne({ robloxId: req.body.referrer });
       const validReferrer = checkReferrer != null ? checkReferrer.username : null;
 
@@ -223,9 +196,9 @@ exports.connect_roblox = [
         await Account.updateOne(
           { username: validReferrer },
           {
-            description: { randomDescription },
-            affiliate: {
-              $push: {
+            description: randomDescription,
+            $push: {
+              affiliate: {
                 referrals: {
                   robloxId: userId,
                   wagered: 0,
@@ -267,7 +240,6 @@ exports.connect_roblox = [
         balance: 0,
         withdrawalWalletAddresses: [],
         ips: [],
-        balance: 0,
         joinDate: new Date(),
         referrer: validReferrer,
         lastMessage: new Date(),
@@ -282,15 +254,12 @@ exports.connect_roblox = [
       });
 
       await account.save();
-      userStore[userId] = { descriptionSet: true };
-      console.log("await account save is called here the page is reloading? maybe here");
-      res.status(200).send(randomDescription);
-    }
+      return res.status(200).send(randomDescription);
     } catch (error) {
       console.error("Error in connect_roblox:", error.message);
-      return res.status(500).json({ 
-        success: false, 
-        message: error.message || "Internal Server Error" 
+      return res.status(500).json({
+        success: false,
+        message: error.message || "Internal Server Error",
       });
     }
   }),

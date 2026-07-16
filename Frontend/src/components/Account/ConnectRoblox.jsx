@@ -75,13 +75,17 @@
               closeModal();
               return toast.error("Description does not match");
             } else if (res.status === 200) {
-              closeModal();
               const data = await res.text();
-              setJWT(data);
-              toast("Login Successful");
-              setTimeout(() => {
-                window.location.reload();
-              }, 1000);
+              if (data && data.split(".").length === 3) {
+                closeModal();
+                setJWT(data);
+                toast("Login Successful");
+                setTimeout(() => {
+                  window.location.reload();
+                }, 1000);
+              } else {
+                toast.error("Login failed. Please try again.");
+              }
             } else {
               const text = await res.text();
               toast.error(text || `Error: ${res.status}`);
