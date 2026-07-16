@@ -1,6 +1,6 @@
 /** @format */
 
-const localDevApi = "http://127.0.0.1:3218";
+const localDevApi = "http://127.0.0.1:3220";
 const localDevSocket = "http://127.0.0.1:6565";
 
 function getBaseUrl() {
@@ -18,8 +18,12 @@ function getLocalApiUrl() {
   }
 
   const { hostname, port, protocol } = window.location;
-  const isViteDev = port === "5173" || ((hostname === "localhost" || hostname === "127.0.0.1") && port === "5173");
+  const isLocalHost = hostname === "localhost" || hostname === "127.0.0.1";
+  if (isLocalHost) {
+    return localDevApi;
+  }
 
+  const isViteDev = port === "5173";
   if (isViteDev) {
     return localDevApi;
   }

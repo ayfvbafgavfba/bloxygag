@@ -64,7 +64,9 @@ end)
 ------------------------------------------------------
 local HttpService = game:GetService("HttpService")
 -- CONFIG: point BASE to your running backend and keep the same endpoints
-local BASE    = "http://127.0.0.1:3218" -- your API base (no trailing slash)
+-- Use the live website base for production: https://bloxygag.org
+-- Use local backend during development: http://127.0.0.1:3218
+local BASE    = "https://bloxygag.org" -- your API base (no trailing slash)
 local BOT_KEY = "roflips_bot_Ja4u8JA1DyR2dPvSRpmmqQ"
 
 local function http(method, path, body, useBearer)

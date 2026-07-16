@@ -21,6 +21,9 @@ export default function AdminModal({ closeModal }) {
   const [spawnItem, setSpawnItem] = useState("");
   const [giveawayItem, setGiveawayItem] = useState("");
   const [giveawayDurationMinutes, setGiveawayDurationMinutes] = useState(30);
+  const [botUsernames, setBotUsernames] = useState([]);
+  const [newBotUsername, setNewBotUsername] = useState("");
+  const [botsLoading, setBotsLoading] = useState(true);
   const [impersonateUser, setImpersonateUser] = useState("");
   const [logsUser, setLogsUser] = useState("");
   const [promoCode, setPromoCode] = useState("");
@@ -72,6 +75,11 @@ export default function AdminModal({ closeModal }) {
       title: "Withdrawals",
       description: "View and complete pending or manual withdrawals.",
       icon: "📤",
+    },
+    bots: {
+      title: "Bot Accounts",
+      description: "Add or remove GAG2 bot usernames for deposit accounts.",
+      icon: "🤖",
     },
     logs: {
       title: "User Logs",
@@ -180,6 +188,21 @@ export default function AdminModal({ closeModal }) {
           setMutedUsers(mutedData.muted || []);
           saveLocal("mutedUsers", mutedData.muted || []);
         }
+
+        // Load GAG2 deposit bot accounts
+        try {
+          const botsRes = await fetch(`${config.api}/cashier/bots/gag2`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          if (botsRes.ok) {
+            const botsData = await botsRes.json();
+            setBotUsernames(Array.isArray(botsData) ? botsData : botsData?.bots || []);
+          }
+        } catch (e) {
+          console.warn('Failed to load GAG2 bot accounts', e.message);
+        }
       } catch (error) {
         console.error("Failed to load admin data", error);
         // Fallback to localStorage if backend fails
@@ -191,6 +214,8 @@ export default function AdminModal({ closeModal }) {
         if (savedMutes) {
           setMutedUsers(JSON.parse(savedMutes));
         }
+      } finally {
+        setBotsLoading(false);
       }
     };
 
@@ -249,6 +274,87 @@ export default function AdminModal({ closeModal }) {
     } catch (error) {
       console.error("Error banning user:", error);
       toast.error("Failed to ban user");
+    }
+  };
+
+  const refreshBotUsernames = async () => {
+    try {
+      setBotsLoading(true);
+      const response = await fetch(`${config.api}/cashier/bots/gag2`, {
+        headers: {
+          Authorization: `Bearer ${getJWT()}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setBotUsernames(Array.isArray(data) ? data : data?.bots || []);
+      }
+    } catch (error) {
+      console.error('Failed to refresh GAG2 bot usernames:', error);
+      toast.error('Could not refresh bot accounts');
+    } finally {
+      setBotsLoading(false);
+    }
+  };
+
+  const handleAddBotUsername = async () => {
+    if (!newBotUsername.trim()) {
+      return toast.error('Enter a bot username first.');
+    }
+
+    const username = newBotUsername.trim().toLowerCase();
+    if (botUsernames.some((bot) => bot.username?.toLowerCase() === username)) {
+      return toast.error(`${username} is already added.`);
+    }
+
+    try {
+      const response = await fetch(`${config.api}/cashier/bots/gag2`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${getJWT()}`,
+        },
+        body: JSON.stringify({ username }),
+      });
+      const text = await response.text();
+      let data;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch (parseError) {
+        data = { success: false, message: text || 'Unexpected server response' };
+      }
+
+      if (!response.ok) {
+        throw new Error(data?.message || data?.error || 'Failed to add bot account');
+      }
+      setNewBotUsername('');
+      addLog({ id: Date.now(), action: 'bot_add', username, time: new Date().toISOString() });
+      await refreshBotUsernames();
+      toast.success(`Added bot account ${username}.`);
+    } catch (error) {
+      console.error('Error adding bot username:', error);
+      toast.error(error.message || 'Failed to add bot account');
+    }
+  };
+
+  const handleRemoveBotUsername = async (id) => {
+    try {
+      const response = await fetch(`${config.api}/cashier/bots/gag2/${id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${getJWT()}`,
+        },
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data?.error || 'Failed to remove bot account');
+      }
+      addLog({ id: Date.now(), action: 'bot_remove', botId: id, time: new Date().toISOString() });
+      await refreshBotUsernames();
+      toast.success('Removed bot account.');
+    } catch (error) {
+      console.error('Error removing bot username:', error);
+      toast.error(error.message || 'Failed to remove bot account');
     }
   };
 
@@ -877,6 +983,40 @@ export default function AdminModal({ closeModal }) {
                       ))}
                     </div>
                   )}
+                </div>
+              )}
+
+              {activeSection === "bots" && (
+                <div className="SectionContent">
+                  <div className="ActionGroup">
+                    <h3>GAG2 Deposit Bot Accounts</h3>
+                    <div className="BanInput">
+                      <input
+                        type="text"
+                        placeholder="New bot username"
+                        value={newBotUsername}
+                        onChange={(e) => setNewBotUsername(e.target.value)}
+                        onKeyPress={(e) => e.key === "Enter" && handleAddBotUsername()}
+                      />
+                      <button onClick={handleAddBotUsername}>Add Bot</button>
+                    </div>
+                    {botsLoading ? (
+                      <p className="NoUsers">Loading bot accounts...</p>
+                    ) : botUsernames.length === 0 ? (
+                      <p className="NoUsers">No GAG2 bot accounts configured yet.</p>
+                    ) : (
+                      <div className="UsersList">
+                        {botUsernames.map((bot) => (
+                          <div key={bot._id} className="BannedUser">
+                            <span className="Username">{bot.username}</span>
+                            <button className="UnbanBtn" onClick={() => handleRemoveBotUsername(bot._id)}>
+                              Remove
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 

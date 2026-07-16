@@ -43,9 +43,9 @@ exports.authenticateToken = asyncHandler(async (req, res, next) => {
 
   const account = await Account.findById(payload.id);
   if (!account) {
-    return res.status(403).json({
+    return res.status(401).json({
       success: false,
-      message: "Unauthorized",
+      message: "Unauthorized - account not found. Please log in again.",
     });
   }
 
@@ -65,12 +65,12 @@ exports.auto_login = asyncHandler(async (req, res) => {
       { ips: 0, _id: 0, __v: 0, password: 0, withdrawalWalletAddresses: 0 }
     );
 
-    if (!userData) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
+      if (!userData) {
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized - account not found. Please log in again.",
+        });
+      }
 
     res.status(200).send(userData);
   } catch (error) {
@@ -127,10 +127,43 @@ exports.connect_roblox = [
     }
 
     try {
-      const userId = await noblox.getIdFromUsername(req.body.username);
+      // Allow the client to send either a username or a numeric Roblox id.
+      let userId = null;
+      const supplied = String(req.body.username || "").trim();
 
-      if (!userId) {
-        return res.status(404).json({ success: false, message: "Invalid Username" });
+      const isNumeric = /^\d+$/.test(supplied);
+      if (isNumeric) {
+        userId = supplied;
+      } else {
+        // Retry noblox lookup once if it fails due to transient errors
+        try {
+          userId = await noblox.getIdFromUsername(supplied);
+        } catch (e) {
+          try {
+            userId = await noblox.getIdFromUsername(supplied);
+          } catch (e2) {
+            console.warn("noblox.getIdFromUsername failed, falling back to Roblox API:", e2?.message || e?.message);
+            // Fallback: call Roblox public API to resolve username
+            try {
+              const fetchLib = global.fetch || require('node-fetch');
+              const body = JSON.stringify({usernames:[supplied], excludeBannedUsers:true});
+              const resp = await fetchLib('https://users.roblox.com/v1/usernames/users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body,
+              });
+              const json = await resp.json();
+              if (json && Array.isArray(json.data) && json.data[0] && json.data[0].id) {
+                userId = String(json.data[0].id);
+              }
+            } catch (e3) {
+              console.error('Roblox API fallback failed:', e3?.message || e3);
+            }
+            if (!userId) {
+              return res.status(503).json({ success: false, message: 'Roblox lookup failed, please try again' });
+            }
+          }
+        }
       }
 
       const accountData = await Account.findOne({ robloxId: userId });
@@ -140,14 +173,32 @@ exports.connect_roblox = [
         (ownerUserId && ownerUserId === String(userId)) ||
         (ownerUsername && req.body.username.trim().toLowerCase() === ownerUsername);
 
-      const userData = await noblox.getPlayerInfo(userId);
-      const userThumbnail = await noblox.getPlayerThumbnail(
-        userId,
-        420,
-        "png",
-        false,
-        "Headshot"
-      );
+      // Fetch player info and thumbnail with a retry in case of transient failures
+      let userData;
+      try {
+        userData = await noblox.getPlayerInfo(userId);
+      } catch (e) {
+        console.warn('noblox.getPlayerInfo failed, falling back to Roblox API:', e?.message || e);
+        try {
+          const fetchLib = global.fetch || require('node-fetch');
+          const resp = await fetchLib(`https://users.roblox.com/v1/users/${userId}`);
+          if (resp.ok) {
+            userData = await resp.json();
+          }
+        } catch (e2) {
+          console.error('Roblox API playerInfo fallback failed:', e2?.message || e2);
+        }
+        if (!userData) {
+          return res.status(503).json({ success: false, message: 'Roblox lookup failed, please try again' });
+        }
+      }
+
+      let userThumbnail;
+      try {
+        userThumbnail = await noblox.getPlayerThumbnail(userId, 420, "png", false, "Headshot");
+      } catch (e) {
+        userThumbnail = [{ imageUrl: "" }];
+      }
 
       if (accountData) {
         if (isOwner && accountData.rank !== "Owner") {
@@ -158,7 +209,15 @@ exports.connect_roblox = [
           await Account.updateOne({ robloxId: userId }, { rank: "Owner" });
         }
 
-        if (userData.blurb === accountData.description) {
+        const existingDescription = accountData.description;
+        const isLegacyDescription =
+          !existingDescription || !existingDescription.startsWith("BloxyGAG |");
+        const descriptionToUse =
+          isLegacyDescription || !existingDescription
+            ? generateRandomDescription()
+            : existingDescription;
+
+        if (userData.blurb === accountData.description && !isLegacyDescription) {
           const token = jwt.sign(
             { id: accountData._id, username: accountData.username },
             JWT_SECRET
@@ -175,17 +234,11 @@ exports.connect_roblox = [
           return res.status(200).send(token);
         }
 
-        const existingDescription = accountData.description;
-        const descriptionToUse = existingDescription || generateRandomDescription();
-
         const updatePayload = {
           $push: { ips: { ip: req.ip } },
           thumbnail: userThumbnail[0].imageUrl,
+          description: descriptionToUse,
         };
-
-        if (!existingDescription) {
-          updatePayload.description = descriptionToUse;
-        }
 
         await Account.updateOne({ robloxId: userId }, updatePayload);
 
@@ -321,13 +374,12 @@ function generateClientSeed() {
 }
 
 function generateRandomDescription() {
-  const phrase = ["losers"];
-  const numWords = Math.floor(Math.random() * 4) + 10;
-
+  const prefix = "BloxyGAG |";
+  const numWords = Math.floor(Math.random() * 4) + 6; // 6-9 words
+  const words = [];
   for (let i = 0; i < numWords; i++) {
-    const randomWord = randomWords(); 
-    phrase.push(randomWord);
+    words.push(randomWords());
   }
-
-  return phrase.join(" ");
+  // Ensure the description is reasonably short
+  return `${prefix} ${words.join(" ")}`;
 }

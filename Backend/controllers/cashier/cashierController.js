@@ -260,6 +260,73 @@ exports.create_withdraw = [
   }),
 ];
 
+exports.clear_withdraw_mm2 = [
+  body("userId").trim().escape(),
+  body("secret").trim().escape(),
+  asyncHandler(async (req, res, next) => {
+    const session = await mongoose.startSession();
+    try {
+      session.startTransaction();
+      const secret = require("crypto")
+        .createHash("sha256")
+        .update(TRANSACTION_SECRET)
+        .digest("hex");
+
+      const isUserBody = JSON.stringify({
+        userIds: [req.body.userId],
+        excludeBannedUsers: true,
+      });
+
+      let withdrawalItems = [];
+
+      const userInfo = await findAccountByRobloxIdOrUsername(req.body.userId);
+      if (!userInfo) {
+        await session.abortTransaction();
+        bugHook.send(
+          `Potential bug. User does not exist in database for MM2 clear withdraw: ${req.body.userId}`
+        );
+        return res.status(400).send("Invalid User ID provided");
+      }
+
+      const userCheck = await fetch("https://users.roblox.com/v1/users", {
+        headers: {
+          Accept: "application/json, text/plain, */*",
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+        body: isUserBody,
+      }).then(async (res) => {
+        return await res.json();
+      });
+
+      if (req.body.secret != secret) {
+        // Checks for correct secret
+        console.error("Unauthorized deposit request!");
+        authHook.send(
+          `@everyone Unauthorized request made to MM2 Clear Withdrawal API (ID: ${
+            req.body.userId ? req.body.userId : "not found!"
+          })`
+        );
+        await session.abortTransaction();
+        return res.sendStatus(401);
+      }
+
+      if (!req.body.userId) {
+        // Check if user ID was set
+        await session.abortTransaction();
+        bugHook.send(
+          "Potential bug. User ID missing in request! (MM2 Clear Withdraw)"
+        );
+        return res.status(400).send("No User ID provided");
+      }
+
+      if (!userCheck.data[0]) {
+        // Check if user exists, prevents bad req
+        await session.abortTransaction();
+        bugHook.send("Potential exploit? User NOT found! (MM2 Clear Withdraw)");
+        return res.status(400).send("Don't try it buddy :)");
+      }
+
       if (!req.body.clearedItems) {
         await session.abortTransaction();
         bugHook.send(

@@ -3,7 +3,8 @@
 require('dotenv').config();
 
 const JWT_SECRET = 'fwnqifnwquiohi421nkmcwqkcmwqkfwqkl';
-const PORT = process.env.PORT || 3218;
+// Use an alternate default port for local development to avoid conflicts.
+const PORT = process.env.PORT || 3220;
 const HCAPTCHA_SECRET =
   process.env.HCAPTCHA_SECRET || "0x0000000000000000000000000000000000000000";
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/bloxpvp';

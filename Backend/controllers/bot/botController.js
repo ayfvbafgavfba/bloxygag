@@ -3,10 +3,81 @@ const Account = require("../../models/account");
 const Item = require("../../models/item");
 const InventoryItem = require("../../models/inventoryItem");
 const GameWithdrawal = require("../../models/gameWithdrawal");
+const Bot = require("../../models/bot");
 const { BOT_KEY } = require("../../config");
 
 const BOT_STATUS = {};
 let NEXT_BOT_SLOT = 1;
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\\]\\]/g, "\\$&");
+}
+
+exports.get_bots_gag2 = asyncHandler(async (req, res) => {
+  const bots = await Bot.find({ game: "GAG2" }).sort({ username: 1 }).lean();
+  const now = Date.now();
+  const results = bots.map((bot) => {
+    const key = bot.username?.toLowerCase?.() || bot.username;
+    const statusEntry = BOT_STATUS[key] || BOT_STATUS[bot.username] || null;
+    const online = statusEntry && now - statusEntry.lastSeen < 120000;
+    return {
+      _id: bot._id,
+      username: bot.username,
+      thumbnail: bot.thumbnail || "",
+      privateServer: bot.privateServer || "",
+      status: online ? "Online" : "Offline",
+      slot: statusEntry?.slot || bot.slot || 0,
+      game: bot.game,
+    };
+  });
+  return res.status(200).json({ bots: results });
+});
+
+exports.get_bots_ps99 = asyncHandler(async (req, res) => {
+  return res.status(200).json({ bots: [] });
+});
+
+exports.add_gag2_bot = asyncHandler(async (req, res) => {
+  const username = (req.body?.username || "").toString().trim();
+  if (!username) {
+    return res.status(400).json({ success: false, message: "Missing username" });
+  }
+
+  const existing = await Bot.findOne({
+    game: "GAG2",
+    username: { $regex: new RegExp(`^${escapeRegExp(username)}$`, "i") },
+  }).exec();
+
+  if (existing) {
+    return res.status(409).json({ success: false, message: "Bot username already exists" });
+  }
+
+  const bot = await Bot.create({
+    robloxId: "",
+    username,
+    thumbnail: "",
+    privateServer: "",
+    status: "Offline",
+    game: "GAG2",
+  });
+
+  return res.status(201).json({ success: true, bot });
+});
+
+exports.remove_gag2_bot = asyncHandler(async (req, res) => {
+  const id = req.params.id;
+  if (!id) {
+    return res.status(400).json({ success: false, message: "Missing bot id" });
+  }
+
+  const bot = await Bot.findById(id).exec();
+  if (!bot) {
+    return res.status(404).json({ success: false, message: "Bot not found" });
+  }
+
+  await Bot.findByIdAndDelete(id);
+  return res.status(200).json({ success: true });
+});
 
 function escapeRegExp(value) {
   return String(value).replace(/[.*+?^${}()|[\\]\\]/g, "\\$&");

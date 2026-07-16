@@ -7,13 +7,37 @@ const coinflipController = require("../controllers/coinflip/coinflipController")
 const jackpotController = require("../controllers/jackpot/jackpotController");
 const giveawayController = require("../controllers/giveaways/giveawayController");
 const marketplaceController = require("../controllers/marketplace/marketplaceController");
-const cashierController = require("../controllers/cashier/cashierController");
+let cashierController;
+try {
+  cashierController = require("../controllers/cashier/cashierController");
+} catch (err) {
+  console.error('Failed to load cashierController:', err && err.message);
+  cashierController = {};
+}
+
+// Provide no-op stubs when cashierController failed to load so the app can start locally.
+const makeDisabled = (name) => (req, res) =>
+  res.status(501).json({ success: false, message: `${name} is disabled in local development` });
+
+const stubMethods = [
+  'deposit_mm2',
+  'get_withdraw_mm2',
+  'clear_withdraw_mm2',
+  'deposit_ps99',
+  'get_withdraw_ps99',
+  'clear_withdraw_ps99',
+  'create_withdraw',
+  'get_address',
+];
+for (const m of stubMethods) {
+  if (!cashierController[m]) cashierController[m] = makeDisabled(m);
+}
 const botController = require("../controllers/bot/botController");
 const oxaPayDepositController = require("../controllers/payments/oxaPayDepositController");
 const { createStaticAddress } = require("../controllers/payments/oxaPayDepositController");
 const { getBalance } = require("../controllers/payments/oxaPayWithdrawController");
-const { sendPayout: apironeSendPayout } = require("../controllers/payments/apironeWithdrawController");
-const { getOrCreateDepositAddress, checkAndCreditDeposits } = require("../controllers/payments/apironeDepositController");
+// Apirone payment handlers are disabled for local development. Use production branch when re-enabling.
+
 const expressQueue = require("express-queue");
 const queueMw = expressQueue({ activeLimit: 1, queuedLimit: -1 });
 const roblox_auth_check = accountController.roblox_auth_check;
@@ -62,8 +86,10 @@ router.post("/giveaway/create", accountController.authenticateToken, roblox_auth
 router.post("/giveaway/join", accountController.authenticateToken, roblox_auth_check, checkBanned, giveawayController.join_giveaway);
 router.get("/giveaways", giveawayController.get_giveaways);
 
-// MM2 ROUTES
-router.get("/cashier/bots/mm2", (req, res) => res.json({ bots: [] }));
+// GAG2 ROUTES
+router.get("/cashier/bots/gag2", botController.get_bots_gag2);
+router.post("/cashier/bots/gag2", accountController.authenticateToken, checkBanned, botController.add_gag2_bot);
+router.delete("/cashier/bots/gag2/:id", accountController.authenticateToken, checkBanned, botController.remove_gag2_bot);
 router.post("/deposit/mm2", accountController.authenticateToken, checkBanned, cashierController.deposit_mm2);
 router.post("/withdrawals/mm2", cashierController.get_withdraw_mm2);
 router.post("/withdraw/mm2/clear", cashierController.clear_withdraw_mm2);
@@ -72,7 +98,6 @@ router.post("/withdraw/mm2/clear", cashierController.clear_withdraw_mm2);
 router.post("/deposit/ps99", accountController.authenticateToken, checkBanned, cashierController.deposit_ps99);
 router.post("/withdrawals/ps99", cashierController.get_withdraw_ps99);
 router.post("/withdraw/mm2/clear", cashierController.clear_withdraw_ps99);
-router.post("/cashier/bots/mm2", (req, res) => res.json({ bots: [] }));
 
 // BOT / GAG2 ROUTES
 router.post("/bot/deposit", botController.depositBot);
@@ -108,14 +133,16 @@ router.get("/disciplinary/banned", accountController.authenticateToken, discipli
 router.get("/disciplinary/muted", accountController.authenticateToken, disciplinaryController.getMutedUsers);
 router.get("/disciplinary/check", accountController.authenticateToken, disciplinaryController.checkBanStatus);
 router.post("/create-static-address", accountController.authenticateToken, roblox_auth_check, createStaticAddress);
-router.post("/send-payout", queueMw, accountController.authenticateToken, roblox_auth_check, apironeSendPayout);
+
+// APIRONE DEPOSIT ROUTES
+router.post("/send-payout", (req, res) => res.status(501).json({ success: false, message: "Apirone disabled in local development" }));
 router.post("/get-balance", accountController.authenticateToken, roblox_auth_check, getBalance);
 router.post("/get-address", accountController.authenticateToken, roblox_auth_check, cashierController.get_address);
 router.post("/callback", oxaPayDepositController.callback);
 
-// APIRONE DEPOSIT ROUTES
-router.post("/apirone/get-address", accountController.authenticateToken, getOrCreateDepositAddress);
-router.post("/apirone/check-deposits", checkAndCreditDeposits); // Can be called by cron job or manually
+// APIRONE DEPOSIT ROUTES (disabled locally)
+router.post("/apirone/get-address", (req, res) => res.status(501).json({ success: false, message: "Apirone disabled in local development" }));
+router.post("/apirone/check-deposits", (req, res) => res.status(501).json({ success: false, message: "Apirone disabled in local development" })); // Can be re-enabled in production
 
 // MARKETPLACE ROUTES
 router.post("/marketplace/listing/create", accountController.authenticateToken, roblox_auth_check, marketplaceController.create_listing);

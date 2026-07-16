@@ -19,7 +19,8 @@ const compression = require("compression");
 const utils = require("./utils/events");
 const cron = require("node-cron");
 let indexRouter;
-const { checkAndCreditDeposits } = require("./controllers/payments/apironeDepositController");
+// Apirone deposit checks are disabled for local development to avoid external API errors.
+// const { checkAndCreditDeposits } = require("./controllers/payments/apironeDepositController");
 const withdrawCryptoHook = new Webhook(
   "https://discord.com/api/webhooks/1225837252706435243/ZVzyp0IAPNI23MHJJ9IhcYbOX71vxrJei0exfIT09grKGVJlGuf-2kNV-DmoDmY1F-vY"
 );
@@ -107,15 +108,8 @@ async function main() {
     console.error(err && err.stack);
   }
 
-  // Start cron job to check Apirone deposits every 5 minutes
-  cron.schedule('*/5 * * * *', async () => {
-    console.log('Running Apirone deposit check...');
-    try {
-      await checkAndCreditDeposits();
-    } catch (error) {
-      console.error('Error in deposit check cron job:', error);
-    }
-  });
+  // Apirone cron disabled in local/dev environment. Re-enable in production when ready.
+  console.log('Apirone deposit checks are disabled in this environment.');
 }
 
 app.set("trust proxy", 1);
@@ -240,8 +234,24 @@ app.use(function (err, req, res, next) {
   res.locals.message = err.message;
   res.locals.error = req.app.get("env") === "development" ? err : {};
 
-  // render the error page
   res.status(err.status || 500);
+
+  const acceptsJson = req.xhr ||
+    (req.headers.accept && req.headers.accept.includes("application/json")) ||
+    req.originalUrl.startsWith("/cashier") ||
+    req.originalUrl.startsWith("/api") ||
+    req.originalUrl.startsWith("/bot") ||
+    req.originalUrl.startsWith("/marketplace");
+
+  if (acceptsJson) {
+    return res.json({
+      success: false,
+      message: err.message || "Server Error",
+      error: req.app.get("env") === "development" ? err : undefined,
+    });
+  }
+
+  // render the error page
   res.render("error");
 });
 

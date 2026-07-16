@@ -84,6 +84,30 @@
       padding: 12px 24px;
       box-sizing: border-box;
       overflow: hidden;
+      .Instructions {
+        width: 100%;
+        background: #151223;
+        border: 1px solid rgba(134, 58, 255, 0.18);
+        border-radius: 12px;
+        padding: 16px 18px;
+        margin-bottom: 12px;
+        h3 {
+          margin: 0 0 8px;
+          font-size: 16px;
+          font-weight: 700;
+          color: #ffffff;
+        }
+        p {
+          margin: 0;
+          font-size: 12px;
+          line-height: 1.5;
+          color: #c0b7d9;
+        }
+        .Hint {
+          margin-top: 8px;
+          color: #a88bff;
+        }
+      }
       .BotsContainer {
         padding: 15px 10px;
         flex: auto;
@@ -105,96 +129,120 @@
           flex-direction: column;
           overflow-y: auto;
           gap: 15px;
+          .EmptyState {
+            width: 100%;
+            padding: 22px 14px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            text-align: center;
+            p {
+              margin: 0;
+              color: #c0b7d9;
+              font-size: 13px;
+            }
+            p + p {
+              margin-top: 6px;
+              color: #8f7fd3;
+            }
+          }
           .Bot {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: space-between;
-            background: linear-gradient(180deg, #19182c 0%, #2e214f 100%)
-                padding-box,
+            background: linear-gradient(180deg, #19182c 0%, #2e214f 100%) padding-box,
               linear-gradient(to bottom, #323058, #5b419d) border-box;
             border: 1px solid transparent;
             border-radius: 10px;
             padding: 20px 15px;
+            flex-direction: column;
             .Info {
               display: flex;
-              justify-content: center;
+              justify-content: space-between;
               align-items: center;
+              width: 100%;
               gap: 10px;
               img {
                 width: 45px;
                 height: 45px;
                 border-radius: 50%;
                 border: 1px solid #863aff;
+                object-fit: cover;
               }
-              .Name {
-                color: white;
-                font-size: 15px;
-                font-weight: 500;
+              .Meta {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                .Name {
+                  color: white;
+                  font-size: 15px;
+                  font-weight: 600;
+                  margin: 0;
+                }
+                .Actions {
+                  display: flex;
+                  gap: 8px;
+                }
+                .CopyButton {
+                  border: 1px solid rgba(134, 58, 255, 0.4);
+                  background: rgba(134, 58, 255, 0.12);
+                  color: #ffffff;
+                  border-radius: 8px;
+                  padding: 8px 12px;
+                  font-size: 12px;
+                  cursor: pointer;
+                  transition: transform 0.15s ease, background 0.15s ease;
+                }
+                .CopyButton:hover {
+                  transform: translateY(-1px);
+                  background: rgba(134, 58, 255, 0.2);
+                }
               }
-              > .Online {
+              .Online,
+              .Offline {
+                width: 16px;
+                height: 16px;
+                border-radius: 999px;
+                position: relative;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+              }
+              .Online {
                 background: #3aff4e;
-                border-radius: 50%;
-                width: 7px;
-                height: 7px;
-                border: 3px solid #329a4a;
-                position: relative;
-                z-index: 2;
-                > .Online {
-                  background: #3aff4e;
-                  border-radius: 50%;
-                  width: 7px;
-                  height: 7px;
-                  position: absolute;
-                  z-index: 1;
-                  filter: blur(6px);
-                }
+                box-shadow: 0 0 10px rgba(58, 255, 78, 0.25);
               }
-              > .Offline {
-                background: #a148ff;
-                border-radius: 50%;
-                width: 7px;
-                height: 7px;
-                border: 3px solid #742536;
-                position: relative;
-                z-index: 2;
-                > .Offline {
-                  background: #a148ff;
-                  border-radius: 50%;
-                  width: 7px;
-                  height: 7px;
-                  position: absolute;
-                  z-index: 1;
-                  filter: blur(6px);
-                }
+              .Offline {
+                background: #ff4f7d;
+                box-shadow: 0 0 10px rgba(255, 79, 125, 0.25);
+              }
+              .Online > .Online,
+              .Offline > .Offline {
+                width: 10px;
+                height: 10px;
               }
             }
-            a {
-              text-decoration: none;
-              background: linear-gradient(180deg, #f971ff 0%, #8b3cff 100%)
-                  padding-box,
-                linear-gradient(to bottom, #c78aff, #a148ff) border-box;
-              border: 2px solid transparent;
-              border-radius: 7px;
-              display: flex;
-              width: 112px;
-              height: 37px;
-              align-items: center;
-              justify-content: center;
-              outline: none;
+            .BotHint {
+              margin-top: 14px;
               p {
-                color: white;
-                font-size: 10px;
-                font-weight: 500;
+                margin: 0;
+                color: #c0b7d9;
+                font-size: 12px;
+                line-height: 1.5;
+              }
+              strong {
+                color: #ffffff;
               }
             }
           }
         }
         .Bots::-webkit-scrollbar {
-          width: 3px;
-          background: #19172C;
+          width: 6px;
+          background: #19172c;
         }
         .Bots::-webkit-scrollbar-thumb {
-
+          background: rgba(134, 58, 255, 0.3);
+          border-radius: 10px;
         }
       }
     }

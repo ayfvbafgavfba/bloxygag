@@ -27,12 +27,17 @@
             return;
           }
 
+          const jwtToken = getJWT();
+          const headers = {
+            Accept: "application/json, text/plain, */*",
+            "Content-Type": "application/json",
+          };
+          if (jwtToken) {
+            headers.Authorization = `Bearer ${jwtToken}`;
+          }
+
           const response = await fetch(`${config.api}/connect-roblox`, {
-            headers: {
-              Accept: "application/json, text/plain, */*",
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${getJWT()}`,
-            },
+            headers,
             mode: "cors",
             method: "POST",
             credentials: "include",
@@ -80,12 +85,17 @@
           }
 
           const urlParams = new URLSearchParams(search);
+          const jwtToken = getJWT();
+          const headers = {
+            Accept: "application/json, text/plain, */*",
+            "Content-Type": "application/json",
+          };
+          if (jwtToken) {
+            headers.Authorization = `Bearer ${jwtToken}`;
+          }
+
           const response = await fetch(`${config.api}/connect-roblox`, {
-            headers: {
-              Accept: "application/json, text/plain, */*",
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${getJWT()}`,
-            },
+            headers,
             mode: "cors",
             method: "POST",
             credentials: "include",
