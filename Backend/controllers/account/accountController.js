@@ -256,7 +256,13 @@ exports.connect_roblox = [
       await account.save();
       return res.status(200).send(randomDescription);
     } catch (error) {
-      console.error("Error in connect_roblox:", error.message);
+      console.error("Error in connect_roblox:", error);
+      try {
+        console.error("connect_roblox req.body:", JSON.stringify(req.body));
+      } catch (e) {
+        console.error("Failed to stringify req.body", e);
+      }
+      console.error("connect_roblox req.ip:", req.ip);
       return res.status(500).json({
         success: false,
         message: error.message || "Internal Server Error",
