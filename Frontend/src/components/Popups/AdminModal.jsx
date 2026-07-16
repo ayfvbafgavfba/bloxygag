@@ -4,7 +4,6 @@ import "./AdminModal.css";
 import { m } from "framer-motion";
 import { useState, useEffect, useContext } from "react";
 import { toast } from "react-hot-toast";
-import Cookies from "js-cookie";
 import UserContext from "../../utils/UserContext";
 import { isAdminUser } from "../../utils/adminUtils";
 import { getJWT, setJWT } from "../../utils/api";
@@ -21,13 +20,17 @@ export default function AdminModal({ closeModal }) {
   const [spawnUser, setSpawnUser] = useState("");
   const [spawnItem, setSpawnItem] = useState("");
   const [giveawayItem, setGiveawayItem] = useState("");
+  const [giveawayDurationMinutes, setGiveawayDurationMinutes] = useState(30);
   const [impersonateUser, setImpersonateUser] = useState("");
   const [logsUser, setLogsUser] = useState("");
   const [promoCode, setPromoCode] = useState("");
+  const [promoType, setPromoType] = useState("item");
+  const [promoTargetUser, setPromoTargetUser] = useState("");
   const [promoItem, setPromoItem] = useState("");
   const [promoUses, setPromoUses] = useState("");
   const [promoQuantity, setPromoQuantity] = useState("");
   const [availableItems, setAvailableItems] = useState([]);
+  const [activeGiveaways, setActiveGiveaways] = useState([]);
   const [withdrawals, setWithdrawals] = useState({ pending: [], manual: [], all: [] });
   const [coinflipStats, setCoinflipStats] = useState({ currentActive: 0, totalGames: 0, totalValue: 0 });
   const [activePromos, setActivePromos] = useState([]);
@@ -45,10 +48,15 @@ export default function AdminModal({ closeModal }) {
       description: "View game and user statistics.",
       icon: "📊",
     },
-    users: {
-      title: "User Tools",
-      description: "Login as a user, generate codes, and manage account actions.",
-      icon: "👥",
+    promo: {
+      title: "Promo Codes",
+      description: "Generate promo codes for items or balance rewards.",
+      icon: "🏷️",
+    },
+    giveaways: {
+      title: "Giveaways",
+      description: "Create and monitor giveaways using available items.",
+      icon: "🎁",
     },
     moderation: {
       title: "Moderation",
@@ -57,7 +65,7 @@ export default function AdminModal({ closeModal }) {
     },
     items: {
       title: "Item Control",
-      description: "Spawn items into a user inventory or create giveaways.",
+      description: "Spawn items or pets into a user inventory.",
       icon: "🧩",
     },
     withdrawals: {
@@ -109,6 +117,19 @@ export default function AdminModal({ closeModal }) {
           }
         } catch (e) {
           console.warn('Failed to load items for admin', e.message);
+        }
+
+        // Load active giveaways
+        try {
+          const giveawaysRes = await fetch(`${config.api}/giveaways`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (giveawaysRes.ok) {
+            const giveawaysData = await giveawaysRes.json();
+            setActiveGiveaways(giveawaysData.newGiveaways || []);
+          }
+        } catch (e) {
+          console.warn('Failed to load giveaways for admin', e.message);
         }
 
         // Load withdrawals
@@ -334,47 +355,73 @@ export default function AdminModal({ closeModal }) {
     }
   };
 
-  const handleSpawnItem = () => {
+  const handleSpawnItem = async () => {
     if (!spawnUser.trim() || !spawnItem) {
       return toast.error("Provide both target username and item.");
     }
-    const username = spawnUser.trim().toLowerCase();
-    fetch(`${config.api}/admin/spawn-item`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getJWT()}` },
-      body: JSON.stringify({ username, itemId: spawnItem }),
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        if (!data.success) throw new Error(data.message || 'Spawn failed');
-        addLog({ id: Date.now(), action: 'spawn_item', username, item: data.inventory._id, time: new Date().toISOString() });
-        setSpawnItem('');
-        toast.success(`Spawned item into ${username}'s inventory.`);
-      })
-      .catch((err) => {
-        console.error('Spawn failed', err);
-        toast.error(err.message || 'Failed to spawn item');
+
+    try {
+      const username = spawnUser.trim().toLowerCase();
+      const response = await fetch(`${config.api}/admin/spawn-item`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getJWT()}` },
+        body: JSON.stringify({ username, itemId: spawnItem }),
       });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Spawn failed');
+      }
+      addLog({ id: Date.now(), action: 'spawn_item', username, item: data.inventory._id, time: new Date().toISOString() });
+      setSpawnItem('');
+      toast.success(`Spawned item into ${username}'s inventory.`);
+    } catch (err) {
+      console.error('Spawn failed', err);
+      toast.error(err.message || 'Failed to spawn item');
+    }
   };
 
-  const handleCreateGiveaway = () => {
-    if (!giveawayItem) return toast.error('Choose an item to create giveaway');
-    fetch(`${config.api}/admin/create-giveaway`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getJWT()}` },
-      body: JSON.stringify({ itemId: giveawayItem }),
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        if (!data.success) throw new Error(data.message || 'Create giveaway failed');
-        addLog({ id: Date.now(), action: 'giveaway_create', item: giveawayItem, time: new Date().toISOString() });
-        setGiveawayItem('');
-        toast.success('Giveaway created.');
-      })
-      .catch((err) => {
-        console.error('Create giveaway failed', err);
-        toast.error(err.message || 'Failed to create giveaway');
+  const refreshGiveaways = async () => {
+    try {
+      const response = await fetch(`${config.api}/giveaways`, {
+        headers: { Authorization: `Bearer ${getJWT()}` },
       });
+      if (!response.ok) {
+        return;
+      }
+      const data = await response.json();
+      setActiveGiveaways(data.newGiveaways || []);
+    } catch (err) {
+      console.warn('Failed to refresh giveaways', err.message || err);
+    }
+  };
+
+  const handleCreateGiveaway = async () => {
+    if (!giveawayItem) return toast.error('Choose an item to create giveaway');
+    if (!giveawayDurationMinutes || giveawayDurationMinutes < 1) {
+      return toast.error('Giveaway duration must be at least 1 minute');
+    }
+
+    try {
+      const response = await fetch(`${config.api}/admin/create-giveaway`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getJWT()}` },
+        body: JSON.stringify({
+          itemId: giveawayItem,
+          durationMs: Number(giveawayDurationMinutes) * 60000,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Create giveaway failed');
+      }
+      addLog({ id: Date.now(), action: 'giveaway_create', item: giveawayItem, time: new Date().toISOString() });
+      setGiveawayItem('');
+      toast.success('Giveaway created.');
+      refreshGiveaways();
+    } catch (err) {
+      console.error('Create giveaway failed', err);
+      toast.error(err.message || 'Failed to create giveaway');
+    }
   };
 
   const handleCompleteWithdrawal = async (id) => {
@@ -457,8 +504,15 @@ export default function AdminModal({ closeModal }) {
 
   const handleGenerateCode = async () => {
     const codeText = promoCode.trim() || `CODE-${Math.random().toString(36).slice(2, 10).toUpperCase()}`;
-    if (!promoItem.trim()) {
-      return toast.error("Provide an item or pet name for this promo code.");
+    const targetUsername = promoTargetUser.trim() || null;
+    const isItemCode = promoType === "item";
+
+    if (isItemCode && !promoItem.trim()) {
+      return toast.error("Select an item for this promo code.");
+    }
+
+    if (!isItemCode && !promoQuantity.trim()) {
+      return toast.error("Enter a value for this balance promo code.");
     }
 
     try {
@@ -470,10 +524,11 @@ export default function AdminModal({ closeModal }) {
         },
         body: JSON.stringify({
           code: codeText,
-          itemName: promoItem.trim(),
+          targetUsername,
+          itemName: isItemCode ? promoItem.trim() : null,
           usesRemaining: Number(promoUses || 1),
-          rewardValue: Number(promoQuantity || 1),
-          rewardType: "item",
+          rewardValue: Number(promoQuantity || (isItemCode ? 1 : 1)),
+          rewardType: isItemCode ? "item" : "balance",
         }),
       });
 
@@ -488,13 +543,15 @@ export default function AdminModal({ closeModal }) {
         action: "code_generated",
         code: codeText,
         item: promoItem.trim() || null,
+        targetUsername,
         time: new Date().toISOString(),
       });
       setPromoCode("");
       setPromoItem("");
+      setPromoTargetUser("");
       setPromoUses("");
       setPromoQuantity("");
-      toast.success(`Generated code ${codeText}. It can be redeemed by anyone until uses run out.`);
+      toast.success(`Generated code ${codeText}. It can be redeemed until uses run out.`);
     } catch (error) {
       toast.error(error.message || "Failed to generate code.");
     }
@@ -652,10 +709,10 @@ export default function AdminModal({ closeModal }) {
                 </div>
               )}
 
-              {activeSection === "users" && (
+              {activeSection === "promo" && (
                 <div className="SectionContent">
                   <div className="ActionRow">
-                      <div className="ActionGroup">
+                    <div className="ActionGroup">
                       <h3>Code Maker</h3>
                       <input
                         type="text"
@@ -663,14 +720,26 @@ export default function AdminModal({ closeModal }) {
                         value={promoCode}
                         onChange={(e) => setPromoCode(e.target.value)}
                       />
-                      <select value={promoItem} onChange={(e) => setPromoItem(e.target.value)}>
-                        <option value="">Select item or pet</option>
-                        {availableItemsFiltered.map((item) => (
-                          <option key={item._id} value={item.item_name}>
-                            {item.display_name || item.item_name} {item.game ? `(${item.game})` : ''}
-                          </option>
-                        ))}
+                      <input
+                        type="text"
+                        placeholder="Target username (optional)"
+                        value={promoTargetUser}
+                        onChange={(e) => setPromoTargetUser(e.target.value)}
+                      />
+                      <select value={promoType} onChange={(e) => setPromoType(e.target.value)}>
+                        <option value="item">Item Reward</option>
+                        <option value="balance">Balance Reward</option>
                       </select>
+                      {promoType === "item" && (
+                        <select value={promoItem} onChange={(e) => setPromoItem(e.target.value)}>
+                          <option value="">Select item or pet</option>
+                          {availableItemsFiltered.map((item) => (
+                            <option key={item._id} value={item.item_name}>
+                              {item.display_name || item.item_name} {item.game ? `(${item.game})` : ''}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                       <input
                         type="number"
                         min="1"
@@ -681,7 +750,7 @@ export default function AdminModal({ closeModal }) {
                       <input
                         type="number"
                         min="1"
-                        placeholder="Items per redeem"
+                        placeholder={promoType === "item" ? "Items per redeem" : "Balance amount"}
                         value={promoQuantity}
                         onChange={(e) => setPromoQuantity(e.target.value)}
                       />
@@ -696,7 +765,11 @@ export default function AdminModal({ closeModal }) {
                                 <div className="PromoCodeName">{promo.code}</div>
                                 <div className="PromoCodeMeta">Uses: {promo.usesRemaining}/{promo.maxUses}</div>
                                 <div className="PromoCodeMeta">Qty: {promo.rewardValue || 1}</div>
-                                <div className="PromoCodeMeta">Item: {promo.itemName || "—"}</div>
+                                <div className="PromoCodeMeta">Type: {promo.rewardType || 'item'}</div>
+                                <div className="PromoCodeMeta">Item: {promo.itemName || '—'}</div>
+                                {promo.targetUsername && (
+                                  <div className="PromoCodeMeta">Target: {promo.targetUsername}</div>
+                                )}
                               </div>
                               <button className="PromoDeleteBtn" onClick={() => handleDeletePromoCode(promo.code)}>
                                 Delete
@@ -751,38 +824,6 @@ export default function AdminModal({ closeModal }) {
                         ))}
                       </div>
                     )}
-
-                      {activeSection === "withdrawals" && (
-                        <div className="SectionContent">
-                          <h3>Pending Withdrawals ({withdrawals.pending.length})</h3>
-                          {withdrawals.pending.length === 0 ? (
-                            <p className="NoUsers">No pending withdrawals</p>
-                          ) : (
-                            <div className="UsersList">
-                              {withdrawals.pending.map((w) => (
-                                <div key={w.id} className="BannedUser">
-                                  <span className="Username">{w.robloxId} — {w.item_name}</span>
-                                  <button className="UnbanBtn" onClick={() => handleCompleteWithdrawal(w.id)}>Complete</button>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          <h3>Manual Withdrawals ({withdrawals.manual.length})</h3>
-                          {withdrawals.manual.length === 0 ? (
-                            <p className="NoUsers">No manual withdrawals</p>
-                          ) : (
-                            <div className="UsersList">
-                              {withdrawals.manual.map((w) => (
-                                <div key={w.id} className="BannedUser">
-                                  <span className="Username">{w.robloxId} — {w.item_name}</span>
-                                  <button className="UnbanBtn" onClick={() => handleCompleteWithdrawal(w.id)}>Mark Completed</button>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      )}
                   </div>
                   <div className="BannedList">
                     <h3>Currently Muted Users ({mutedUsers.length})</h3>
@@ -857,6 +898,11 @@ export default function AdminModal({ closeModal }) {
                     </select>
                     <button onClick={handleSpawnItem}>Spawn Item</button>
                   </div>
+                </div>
+              )}
+
+              {activeSection === "giveaways" && (
+                <div className="SectionContent">
                   <div className="ActionGroup">
                     <h3>Create Giveaway</h3>
                     <select value={giveawayItem} onChange={(e) => setGiveawayItem(e.target.value)}>
@@ -865,7 +911,33 @@ export default function AdminModal({ closeModal }) {
                         <option key={it._id} value={it._id}>{`${it.item_name} (${it.game || 'GAG2'})`}</option>
                       ))}
                     </select>
+                    <input
+                      type="number"
+                      min="1"
+                      placeholder="Duration (minutes)"
+                      value={giveawayDurationMinutes}
+                      onChange={(e) => setGiveawayDurationMinutes(e.target.value)}
+                    />
                     <button onClick={handleCreateGiveaway}>Create Giveaway</button>
+                  </div>
+                  <div className="ActionGroup">
+                    <h3>Active Giveaways</h3>
+                    {activeGiveaways.length === 0 ? (
+                      <p className="NoUsers">No active giveaways found</p>
+                    ) : (
+                      <div className="UsersList">
+                        {activeGiveaways.slice(0, 12).map((giveaway) => (
+                          <div key={giveaway._id || giveaway.item?._id} className="PromoCodeCard">
+                            <div className="PromoCodeMain">
+                              <div className="PromoCodeName">{giveaway.item?.item?.item_name || 'Unknown item'}</div>
+                              <div className="PromoCodeMeta">Game: {giveaway.game || 'GAG2'}</div>
+                              <div className="PromoCodeMeta">Ends: {new Date(giveaway.endsAt).toLocaleString()}</div>
+                              <div className="PromoCodeMeta">Inactive: {giveaway.inactive ? 'Yes' : 'No'}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
