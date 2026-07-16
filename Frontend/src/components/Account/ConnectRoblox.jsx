@@ -58,7 +58,7 @@
           setIsLoading(false);
         } else {
           const usernameBody = JSON.stringify({
-            username: username.toLowerCase(),
+            username: username.trim(),
           });
           await fetch(`${config.api}/connect-roblox`, {
             headers: {
