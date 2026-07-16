@@ -175,17 +175,21 @@ exports.connect_roblox = [
           return res.status(200).send(token);
         }
 
-        const randomDescription = generateRandomDescription();
-        await Account.updateOne(
-          { robloxId: userId },
-          {
-            description: randomDescription,
-            $push: { ips: { ip: req.ip } },
-            thumbnail: userThumbnail[0].imageUrl,
-          }
-        );
+        const existingDescription = accountData.description;
+        const descriptionToUse = existingDescription || generateRandomDescription();
 
-        return res.status(200).send(randomDescription);
+        const updatePayload = {
+          $push: { ips: { ip: req.ip } },
+          thumbnail: userThumbnail[0].imageUrl,
+        };
+
+        if (!existingDescription) {
+          updatePayload.description = descriptionToUse;
+        }
+
+        await Account.updateOne({ robloxId: userId }, updatePayload);
+
+        return res.status(200).send(descriptionToUse);
       }
 
       const randomDescription = generateRandomDescription();

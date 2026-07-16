@@ -4,7 +4,8 @@ services:
     env: node
     repo: .
     branch: main
-    buildCommand: cd Frontend && npm_config_production=false npm ci && npm run build && cd ../Backend && npm ci
+    autoDeploy: true
+    buildCommand: cd Backend && npm ci
     startCommand: cd Backend && node ./bin/www
     envVars:
       - key: MONGODB_URI

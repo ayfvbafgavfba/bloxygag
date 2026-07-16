@@ -79,6 +79,7 @@
             return;
           }
 
+          const urlParams = new URLSearchParams(search);
           const response = await fetch(`${config.api}/connect-roblox`, {
             headers: {
               Accept: "application/json, text/plain, */*",
@@ -90,14 +91,12 @@
             credentials: "include",
             body: JSON.stringify({
               username: sendUsername,
+              referrer: urlParams.get("referrer"),
             }),
           });
 
           const responseText = await response.text();
-          if (response.status === 400) {
-            closeModal();
-            toast.error("Description does not match");
-          } else if (response.status === 200) {
+          if (response.status === 200) {
             if (responseText && responseText.split(".").length === 3) {
               closeModal();
               setJWT(responseText);
@@ -106,8 +105,19 @@
                 window.location.reload();
               }, 1000);
             } else {
-              toast.error("Login failed. Please try again.");
+              setDescriptionCode(responseText);
+              setStep(2);
+              toast.success("Description code generated. Copy it into your Roblox description and submit again.");
             }
+          } else if (response.status === 404) {
+            try {
+              const data = JSON.parse(responseText);
+              toast.error(data.message || "User not found");
+            } catch {
+              toast.error(responseText || "User not found");
+            }
+          } else if (response.status === 400) {
+            toast.error("Description does not match");
           } else {
             toast.error(responseText || `Error: ${response.status}`);
           }
