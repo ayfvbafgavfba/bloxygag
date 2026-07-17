@@ -22,22 +22,27 @@ function attachImageFallback(img) {
         return;
       }
 
-      if (/raw\.githubusercontent\.com/i.test(src) || /pet-placeholder\.svg$/i.test(src)) {
+      if (/pet-placeholder\.svg$/i.test(src)) {
         return;
       }
 
-      const gag2GithubUrl = (() => {
-        const parts = src.split('/');
+      const getGithubRawUrl = (source) => {
+        const parts = source.split('/');
         const filename = parts[parts.length - 1] || '';
         if (!filename) return null;
         if (/\.(png|jpe?g|webp|svg)$/i.test(filename)) {
           return `https://raw.githubusercontent.com/ayfvbafgavfba/bloxygag/main/Frontend/public/images/gag2/${filename}`;
         }
         return null;
-      })();
+      };
 
-      if (gag2GithubUrl) {
+      const gag2GithubUrl = getGithubRawUrl(src);
+      const isGag2Source = /gag2\.gg|cdn\.gag2\.gg|bloxygag\.org\/images\/gag2|\/images\/gag2\/|images\/gag2\/|\/gag2\/|^gag2\//i.test(src);
+
+      if (gag2GithubUrl && isGag2Source && !/raw\.githubusercontent\.com/i.test(src)) {
         img.src = gag2GithubUrl;
+      } else if (/raw\.githubusercontent\.com/i.test(src)) {
+        img.src = FALLBACK_IMAGE;
       } else {
         img.src = FALLBACK_IMAGE;
       }

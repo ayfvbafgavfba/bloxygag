@@ -4,11 +4,29 @@ const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/ayfvbafgavfba/bloxyga
 const PLACEHOLDER = "/images/pet-placeholder.svg";
 const GAG2_IMAGE_EXTENSIONS = "png|jpg|jpeg|webp|svg";
 
-function getGag2GithubUrl(imagePath) {
+function getGag2Filename(imagePath) {
   const path = (imagePath || "").toString();
-  const filenameMatch = path.match(new RegExp(`/([^/\\?#]+\\.(?:${GAG2_IMAGE_EXTENSIONS}))(?:[?#].*)?$`, "i"));
-  if (!filenameMatch) return null;
-  return `${GITHUB_RAW_BASE}/${filenameMatch[1]}`;
+  const match = path.match(new RegExp(`([^/\\?#]+\.(?:${GAG2_IMAGE_EXTENSIONS}))(?:[?#].*)?$`, "i"));
+  return match ? match[1] : null;
+}
+
+function getGag2GithubUrl(imagePath) {
+  const filename = getGag2Filename(imagePath);
+  return filename ? `${GITHUB_RAW_BASE}/${filename}` : null;
+}
+
+function isGag2Source(imagePath) {
+  if (!imagePath) return false;
+  const source = imagePath.toString().toLowerCase();
+  return (
+    source.includes("gag2.gg") ||
+    source.includes("cdn.gag2.gg") ||
+    source.includes("bloxygag.org/images/gag2") ||
+    source.includes("/images/gag2/") ||
+    source.includes("images/gag2/") ||
+    source.includes("/gag2/") ||
+    source.startsWith("gag2/")
+  );
 }
 
 export const resolvePetImage = (imagePath) => {
@@ -17,11 +35,22 @@ export const resolvePetImage = (imagePath) => {
   if (!source) return PLACEHOLDER;
 
   const lowerSource = source.toLowerCase();
-  const isAbsoluteUrl = /^https?:\/\//i.test(source);
-  const isGag2Image = lowerSource.includes("/images/gag2/") || lowerSource.includes("gag2.gg") || lowerSource.includes("bloxygag.org/images/gag2") || lowerSource.includes("/gag2/");
-  const githubUrl = getGag2GithubUrl(source);
+  if (["null", "undefined", "none", "n/a"].includes(lowerSource)) {
+    return PLACEHOLDER;
+  }
 
-  if (isGag2Image && githubUrl) {
+  if (/^data:/i.test(source)) {
+    return source;
+  }
+
+  const githubUrl = getGag2GithubUrl(source);
+  const isAbsoluteUrl = /^https?:\/\//i.test(source);
+
+  if (githubUrl && isGag2Source(source)) {
+    return githubUrl;
+  }
+
+  if (githubUrl && !isAbsoluteUrl && !source.startsWith("/images/")) {
     return githubUrl;
   }
 
