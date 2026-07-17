@@ -33,6 +33,8 @@ export default function AdminModal({ closeModal }) {
   const [promoUses, setPromoUses] = useState("");
   const [promoQuantity, setPromoQuantity] = useState("");
   const [availableItems, setAvailableItems] = useState([]);
+  const [availableItemsError, setAvailableItemsError] = useState("");
+  const [availableItemsCount, setAvailableItemsCount] = useState(0);
   const [activeGiveaways, setActiveGiveaways] = useState([]);
   const [withdrawals, setWithdrawals] = useState({ pending: [], manual: [], all: [] });
   const [coinflipStats, setCoinflipStats] = useState({ currentActive: 0, totalGames: 0, totalValue: 0 });
@@ -46,6 +48,40 @@ export default function AdminModal({ closeModal }) {
     const isHugeCatPS99 = item?.game?.toLowerCase?.()?.includes("ps99") && item?.item_name?.toLowerCase?.()?.includes("huge cat");
     return !isHugeCatPS99;
   });
+
+  const loadAvailableItems = async (token) => {
+    try {
+      const itemsRes = await fetch(`${config.api}/admin/items`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!itemsRes.ok) {
+        const errText = await itemsRes.text().catch(() => "");
+        setAvailableItemsError(
+          `Failed to load admin items: ${itemsRes.status}${errText ? ` - ${errText}` : ""}`
+        );
+        setAvailableItems([]);
+        setAvailableItemsCount(0);
+        console.warn('Failed to load items for admin', itemsRes.status, errText);
+        return;
+      }
+
+      const itemsData = await itemsRes.json();
+      const items = itemsData.items || [];
+      setAvailableItems(items);
+      setAvailableItemsCount(items.length);
+      setAvailableItemsError("");
+      console.debug('Admin items loaded', {
+        total: items.length,
+        sample: items.slice(0, 10).map((i) => ({ item_name: i.item_name, game: i.game })),
+      });
+    } catch (e) {
+      setAvailableItemsError(`Failed to load admin items: ${e.message || e}`);
+      setAvailableItems([]);
+      setAvailableItemsCount(0);
+      console.warn('Failed to load items for admin', e.message || e);
+    }
+  };
 
   const sections = {
     stats: {
@@ -122,17 +158,7 @@ export default function AdminModal({ closeModal }) {
         }
 
         // Load available items for admin tools
-        try {
-          const itemsRes = await fetch(`${config.api}/admin/items`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (itemsRes.ok) {
-            const itemsData = await itemsRes.json();
-            setAvailableItems(itemsData.items || []);
-          }
-        } catch (e) {
-          console.warn('Failed to load items for admin', e.message);
-        }
+        await loadAvailableItems(token);
 
         // Load active giveaways
         try {
@@ -239,6 +265,13 @@ export default function AdminModal({ closeModal }) {
       setUserLogs(JSON.parse(savedLogs));
     }
   }, []);
+
+  useEffect(() => {
+    if (activeSection === "items" || activeSection === "promo" || activeSection === "giveaways") {
+      const token = getJWT();
+      if (token) loadAvailableItems(token);
+    }
+  }, [activeSection]);
 
   const saveLocal = (key, value) => {
     localStorage.setItem(key, JSON.stringify(value));
@@ -918,6 +951,7 @@ export default function AdminModal({ closeModal }) {
                             </option>
                           ))}
                         </select>
+                        {availableItemsError && <p className="NoUsers">{availableItemsError}</p>}
                       )}
                       <input
                         type="number"
@@ -1109,6 +1143,13 @@ export default function AdminModal({ closeModal }) {
                         <option key={it._id} value={it._id}>{`${it.item_name} (${it.game || 'GAG2'})`}</option>
                       ))}
                     </select>
+                    {availableItemsError ? (
+                      <p className="NoUsers">{availableItemsError}</p>
+                    ) : availableItemsFiltered.length === 0 ? (
+                      <p className="NoUsers">No spawnable items loaded. Check backend item data or API response.</p>
+                    ) : (
+                      <p className="NoUsers">Loaded {availableItemsCount} admin items.</p>
+                    )}
                     <button onClick={handleSpawnItem}>Spawn Item</button>
                   </div>
                 </div>
