@@ -1,8 +1,13 @@
 import config from "../config";
 
 export const resolvePetImage = (imagePath) => {
-  if (!imagePath) return "";
+  const placeholder = "/images/pet-placeholder.svg";
+  if (!imagePath) return placeholder;
   if (/^https?:\/\//i.test(imagePath)) return imagePath;
   const normalizedPath = imagePath.startsWith("/") ? imagePath : `/${imagePath}`;
-  return `${config.api}${normalizedPath}`;
+  try {
+    return `${config.api}${normalizedPath}`;
+  } catch (e) {
+    return placeholder;
+  }
 };
