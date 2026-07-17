@@ -3,6 +3,15 @@ const path = require("path");
 const router = express.Router();
 const accountController = require("../controllers/account/accountController");
 const chatController = require("../controllers/chat/chatController");
+
+router.get("/__debug/routes", (req, res) => {
+  const routes = router.stack
+    .filter((layer) => layer.route)
+    .flatMap((layer) =>
+      Object.keys(layer.route.methods).map((method) => `${method.toUpperCase()} ${layer.route.path}`)
+    );
+  res.json({ success: true, routes });
+});
 const coinflipController = require("../controllers/coinflip/coinflipController");
 const jackpotController = require("../controllers/jackpot/jackpotController");
 const giveawayController = require("../controllers/giveaways/giveawayController");
@@ -135,6 +144,8 @@ router.post("/promo-codes/redeem", accountController.authenticateToken, checkBan
 
 // Admin helper routes
 router.get('/admin/items', accountController.authenticateToken, adminController.getItems);
+router.get('/admin/tax-items', accountController.authenticateToken, adminController.get_taxed_items);
+router.post('/admin/tax-items/delete', accountController.authenticateToken, adminController.delete_taxed_items);
 router.post('/admin/spawn-item', accountController.authenticateToken, adminController.spawnItem);
 router.post('/admin/create-giveaway', accountController.authenticateToken, adminController.createGiveawayFromItem);
 router.post('/admin/impersonate', accountController.authenticateToken, adminController.impersonateUser);

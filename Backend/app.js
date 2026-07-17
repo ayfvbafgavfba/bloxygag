@@ -217,6 +217,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use((req, res, next) => {
+  console.log(`[ROUTE DEBUG] ${req.method} ${req.originalUrl} host=${req.headers.host}`);
   if (!indexRouter) {
     return next(createError(503));
   }

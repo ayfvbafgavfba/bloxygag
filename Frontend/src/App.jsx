@@ -12,6 +12,19 @@ import { AnimatePresence } from "framer-motion";
 import { LazyMotion, domAnimation } from "framer-motion";
 import Cookies from "js-cookie";
 
+if (import.meta.env.PROD) {
+  console.log(
+    "[config] api:",
+    config.api,
+    "socketUrl:",
+    config.socketUrl,
+    "VITE_API_URL:",
+    import.meta.env.VITE_API_URL,
+    "VITE_SOCKET_URL:",
+    import.meta.env.VITE_SOCKET_URL
+  );
+}
+
 // Socket will be initialized after auth is checked to ensure a valid token
 // is provided during the Socket.IO handshake.
 
