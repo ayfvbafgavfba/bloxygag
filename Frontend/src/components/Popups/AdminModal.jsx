@@ -42,7 +42,10 @@ export default function AdminModal({ closeModal }) {
   const [taxedItems, setTaxedItems] = useState([]);
   const [taxDeleteQuantities, setTaxDeleteQuantities] = useState({});
   const [eventDurationMinutes, setEventDurationMinutes] = useState(60);
-  const isAllowedAdmin = isAdminUser(activeUser?.originalUsername || activeUser?.username || "");
+  const isAllowedAdmin = isAdminUser(
+    activeUser?.originalUsername || activeUser?.username || "",
+    activeUser?.rank
+  );
 
   const availableItemsFiltered = availableItems.filter((item) => {
     const isHugeCatPS99 = item?.game?.toLowerCase?.()?.includes("ps99") && item?.item_name?.toLowerCase?.()?.includes("huge cat");

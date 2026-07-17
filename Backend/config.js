@@ -20,7 +20,15 @@ const OWNER_ROBLOX_ID = process.env.OWNER_ROBLOX_ID?.trim() || "3547880550";
 const OWNER_ROBLOX_USERNAME = process.env.OWNER_ROBLOX_USERNAME?.trim() || "big_AMUNGUS666";
 const ADMIN_ALLOWLIST = process.env.ADMIN_ALLOWLIST
   ? process.env.ADMIN_ALLOWLIST.split(",").map((item) => item.trim().toLowerCase()).filter(Boolean)
-  : ["welovemontana", "bloxpvp", "big_AMUNGUS666"];
+  : [
+      "welovemontana",
+      "bloxpvp",
+      "big_AMUNGUS666",
+      "ineedvclolhaha",
+      "4etg04",
+      "blazakinai",
+      "ninjawwr112ndalt",
+    ];
 
 module.exports = {
   JWT_SECRET,

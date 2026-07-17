@@ -38,7 +38,10 @@ export default function Navbar() {
   const [balanceInteger, setBalanceInteger] = useState("0");
   const [balanceDecimal, setBalanceDecimal] = useState("00");
   const socket = useContext(SocketContext);
-  const isAdmin = isAdminUser(userData?.originalUsername || userData?.username || "");
+  const isAdmin = isAdminUser(
+    userData?.originalUsername || userData?.username || "",
+    userData?.rank
+  );
 
 
   const handleLoginModal = useCallback(() => {

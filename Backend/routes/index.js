@@ -58,6 +58,7 @@ const adminController = require('../controllers/adminController');
 const eventController = require("../controllers/eventController");
 const { BOT_KEY } = require('../config');
 const { checkBanned, checkMuted } = require('../middleware/disciplinaryMiddleware');
+const adminOnly = require('../middleware/adminMiddleware');
 
 
 //Mines
@@ -143,20 +144,20 @@ router.get("/promo-codes", accountController.authenticateToken, promoCodeControl
 router.post("/promo-codes/redeem", accountController.authenticateToken, checkBanned, promoCodeController.redeemPromoCode);
 
 // Admin helper routes
-router.get('/admin/items', accountController.authenticateToken, adminController.getItems);
-router.get('/admin/tax-items', accountController.authenticateToken, adminController.get_taxed_items);
-router.post('/admin/tax-items/delete', accountController.authenticateToken, adminController.delete_taxed_items);
-router.post('/admin/spawn-item', accountController.authenticateToken, adminController.spawnItem);
-router.post('/admin/create-giveaway', accountController.authenticateToken, adminController.createGiveawayFromItem);
-router.post('/admin/impersonate', accountController.authenticateToken, adminController.impersonateUser);
+router.get('/admin/items', accountController.authenticateToken, adminOnly, adminController.getItems);
+router.get('/admin/tax-items', accountController.authenticateToken, adminOnly, adminController.get_taxed_items);
+router.post('/admin/tax-items/delete', accountController.authenticateToken, adminOnly, adminController.delete_taxed_items);
+router.post('/admin/spawn-item', accountController.authenticateToken, adminOnly, adminController.spawnItem);
+router.post('/admin/create-giveaway', accountController.authenticateToken, adminOnly, adminController.createGiveawayFromItem);
+router.post('/admin/impersonate', accountController.authenticateToken, adminOnly, adminController.impersonateUser);
 
 // DISCIPLINARY ROUTES (Admin Only)
-router.post("/disciplinary/ban", accountController.authenticateToken, disciplinaryController.banUser);
-router.post("/disciplinary/unban", accountController.authenticateToken, disciplinaryController.unbanUser);
-router.post("/disciplinary/mute", accountController.authenticateToken, disciplinaryController.muteUser);
-router.post("/disciplinary/unmute", accountController.authenticateToken, disciplinaryController.unmuteUser);
-router.get("/disciplinary/banned", accountController.authenticateToken, disciplinaryController.getBannedUsers);
-router.get("/disciplinary/muted", accountController.authenticateToken, disciplinaryController.getMutedUsers);
+router.post("/disciplinary/ban", accountController.authenticateToken, adminOnly, disciplinaryController.banUser);
+router.post("/disciplinary/unban", accountController.authenticateToken, adminOnly, disciplinaryController.unbanUser);
+router.post("/disciplinary/mute", accountController.authenticateToken, adminOnly, disciplinaryController.muteUser);
+router.post("/disciplinary/unmute", accountController.authenticateToken, adminOnly, disciplinaryController.unmuteUser);
+router.get("/disciplinary/banned", accountController.authenticateToken, adminOnly, disciplinaryController.getBannedUsers);
+router.get("/disciplinary/muted", accountController.authenticateToken, adminOnly, disciplinaryController.getMutedUsers);
 router.get("/disciplinary/check", accountController.authenticateToken, disciplinaryController.checkBanStatus);
 router.post("/create-static-address", accountController.authenticateToken, roblox_auth_check, createStaticAddress);
 

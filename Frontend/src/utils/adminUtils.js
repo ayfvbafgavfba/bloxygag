@@ -22,7 +22,14 @@ export const getAdminAllowlist = () => {
   return DEFAULT_ADMIN_ALLOWLIST;
 };
 
-export const isAdminUser = (username) => {
+export const isAdminUser = (username, rank) => {
+  if (rank && typeof rank === "string") {
+    const normalizedRank = rank.trim().toLowerCase();
+    if (normalizedRank !== "user") {
+      return true;
+    }
+  }
+
   if (!username) {
     return false;
   }
