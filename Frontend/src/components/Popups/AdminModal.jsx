@@ -37,6 +37,8 @@ export default function AdminModal({ closeModal }) {
   const [withdrawals, setWithdrawals] = useState({ pending: [], manual: [], all: [] });
   const [coinflipStats, setCoinflipStats] = useState({ currentActive: 0, totalGames: 0, totalValue: 0 });
   const [activePromos, setActivePromos] = useState([]);
+  const [taxedItems, setTaxedItems] = useState([]);
+  const [taxDeleteQuantities, setTaxDeleteQuantities] = useState({});
   const [eventDurationMinutes, setEventDurationMinutes] = useState(60);
   const isAllowedAdmin = isAdminUser(activeUser?.originalUsername || activeUser?.username || "");
 
@@ -80,6 +82,11 @@ export default function AdminModal({ closeModal }) {
       title: "Bot Accounts",
       description: "Add or remove GAG2 bot usernames for deposit accounts.",
       icon: "🤖",
+    },
+    tax: {
+      title: "Taxed Items",
+      description: "View taxed items and pets held by the tax account.",
+      icon: "🧾",
     },
     logs: {
       title: "User Logs",
@@ -202,6 +209,12 @@ export default function AdminModal({ closeModal }) {
           }
         } catch (e) {
           console.warn('Failed to load GAG2 bot accounts', e.message);
+        }
+
+        try {
+          await refreshTaxedItems();
+        } catch (error) {
+          console.warn('Failed to load taxed items', error.message || error);
         }
       } catch (error) {
         console.error("Failed to load admin data", error);
@@ -498,6 +511,66 @@ export default function AdminModal({ closeModal }) {
       setActiveGiveaways(data.newGiveaways || []);
     } catch (err) {
       console.warn('Failed to refresh giveaways', err.message || err);
+    }
+  };
+
+  const refreshTaxedItems = async () => {
+    try {
+      const response = await fetch(`${config.api}/admin/tax-items`, {
+        headers: { Authorization: `Bearer ${getJWT()}` },
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data?.message || 'Failed to load taxed items');
+      }
+      setTaxedItems(data.taxedItems || []);
+      setTaxDeleteQuantities((prev) => {
+        const next = { ...prev };
+        (data.taxedItems || []).forEach((item) => {
+          const key = `${item.itemName}||${item.game}`;
+          if (!next[key]) next[key] = 1;
+        });
+        return next;
+      });
+    } catch (error) {
+      console.warn('Failed to refresh taxed items', error.message || error);
+      throw error;
+    }
+  };
+
+  const handleDeleteTaxedItems = async (itemName, game) => {
+    try {
+      const key = `${itemName}||${game}`;
+      const quantity = Number(taxDeleteQuantities[key] || 1);
+      if (!itemName || quantity < 1) {
+        return toast.error('Invalid delete quantity');
+      }
+      const response = await fetch(`${config.api}/admin/tax-items/delete`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${getJWT()}`,
+        },
+        body: JSON.stringify({ itemName, quantity, game }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data?.message || 'Failed to delete taxed items');
+      }
+      await refreshTaxedItems();
+      setTaxDeleteQuantities((prev) => ({ ...prev, [key]: 1 }));
+      addLog({
+        id: Date.now(),
+        action: 'tax_delete',
+        itemName,
+        game,
+        quantity,
+        time: new Date().toISOString(),
+      });
+      toast.success(`Deleted ${quantity} taxed item(s) from ${itemName}.`);
+    } catch (error) {
+      console.error('Failed to delete taxed items', error);
+      toast.error(error.message || 'Failed to delete taxed items');
     }
   };
 
@@ -1037,6 +1110,52 @@ export default function AdminModal({ closeModal }) {
                       ))}
                     </select>
                     <button onClick={handleSpawnItem}>Spawn Item</button>
+                  </div>
+                </div>
+              )}
+
+              {activeSection === "tax" && (
+                <div className="SectionContent">
+                  <div className="ActionGroup">
+                    <h3>Taxed Items & Pets</h3>
+                    {taxedItems.length === 0 ? (
+                      <p className="NoUsers">No taxed items found.</p>
+                    ) : (
+                      <div className="UsersList">
+                        {taxedItems.map((item) => {
+                          const key = `${item.itemName}||${item.game}`;
+                          return (
+                            <div key={key} className="PromoCodeCard">
+                              <div className="PromoCodeMain">
+                                <div className="PromoCodeName">{item.itemName}</div>
+                                <div className="PromoCodeMeta">Game: {item.game || 'GAG2'}</div>
+                                <div className="PromoCodeMeta">Type: {item.itemType}</div>
+                                <div className="PromoCodeMeta">Count: {item.count}</div>
+                                <div className="PromoCodeMeta">
+                                  <label>
+                                    Delete quantity:
+                                    <input
+                                      type="number"
+                                      min="1"
+                                      value={taxDeleteQuantities[key] || 1}
+                                      onChange={(e) =>
+                                        setTaxDeleteQuantities((prev) => ({
+                                          ...prev,
+                                          [key]: Number(e.target.value) || 1,
+                                        }))
+                                      }
+                                    />
+                                  </label>
+                                </div>
+                              </div>
+                              <button className="PromoDeleteBtn" onClick={() => handleDeleteTaxedItems(item.itemName, item.game)}>
+                                Delete Selected
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

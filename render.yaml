@@ -34,4 +34,22 @@ services:
         sync: false
       - key: APIRONE_CALLBACK_SECRET
         sync: false
+
+  - type: static
+    name: bloxygag-frontend
+    env: static
+    repo: .
+    branch: main
+    autoDeploy: true
+    buildCommand: cd Frontend && npm ci && npm run build
+    publishPath: Frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        sync: false
+      - key: VITE_SOCKET_URL
+        sync: false
+      - key: HCAPTCHA_SECRET
+        sync: false
+      - key: BOT_KEY
+        sync: false
 *** End Patch
