@@ -584,8 +584,33 @@ function generateRandomSeed() {
 }
 
 async function commitToFutureBlock() {
-  const response = await fetch("https://eos.greymass.com/");
-  return await response.json();
+  const endpoints = [
+    "https://eos.greymass.com/v1/chain/get_info",
+    "https://api.eosnewyork.io/v1/chain/get_info",
+    "https://eos.hyperion.eosrio.io/v1/chain/get_info",
+  ];
+
+  let lastError;
+  for (const endpoint of endpoints) {
+    try {
+      const response = await fetch(endpoint, { timeout: 7000 });
+      if (!response.ok) {
+        throw new Error(`EOS endpoint ${endpoint} returned ${response.status}`);
+      }
+      const json = await response.json();
+      if (json && json.head_block_id && json.head_block_num != null) {
+        return json;
+      }
+      throw new Error(`Invalid EOS response from ${endpoint}`);
+    } catch (error) {
+      console.warn("commitToFutureBlock failed on", endpoint, error.message);
+      lastError = error;
+    }
+  }
+
+  throw new Error(
+    `commitToFutureBlock: no EOS provider available. Last error: ${lastError?.message}`
+  );
 }
 
 async function getPreviousCoinflips() {

@@ -75,32 +75,42 @@ export default function CoinflipJoining({
         chosenItems: selectedPets,
         id: Information._id,
       });
-      await fetch(`${config.api}/coinflip/join`, {
-        headers: {
-          Accept: "application/json, text/plain, */*",
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${getJWT()}`,
-        },
-        mode: "cors",
-        method: "POST",
-        body: gameInfo,
-      }).then(async (res) => {
-        setIsLoading(false);
-        if (res.status == 422) {
-          return toast.error("One of your selected item's do not exist");
-        } else if (res.status != 200) {
-          const data = await res.text();
-          return toast.error(data);
+      try {
+        const res = await fetch(`${config.api}/coinflip/join`, {
+          headers: {
+            Accept: "application/json, text/plain, */*",
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${getJWT()}`,
+          },
+          mode: "cors",
+          method: "POST",
+          body: gameInfo,
+        });
+
+        if (res.status === 422) {
+          const message = await res.text();
+          return toast.error(message || "One of your selected items does not exist");
         }
-        closeModal();
+
+        if (!res.ok) {
+          const message = await res.text();
+          return toast.error(message || `Failed to join coinflip (${res.status})`);
+        }
+
         const data = await res.json();
+        closeModal();
         setTimeout(() => {
           renderModal(
             <CoinflipViewing Information={data} closeModal={closeModal} />
           );
         }, 500);
         toast.success("Game Joined");
-      });
+      } catch (error) {
+        console.error("Coinflip join failed:", error);
+        toast.error("Unable to join coinflip. Please try again.");
+      } finally {
+        setIsLoading(false);
+      }
     },
     [selectedValue, selectedPets, closeModal, Information, renderModal, userData]
   );
