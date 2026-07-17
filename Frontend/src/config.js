@@ -50,17 +50,17 @@ const isProduction = import.meta.env.PROD;
 const apiOverride = import.meta.env.VITE_API_URL;
 const socketOverride = import.meta.env.VITE_SOCKET_URL;
 
-function getProductionHost() {
-  if (typeof window === "undefined") {
-    return "https://bloxygag.org";
-  }
-  const { hostname, port, protocol } = window.location;
-  return `${protocol}//${hostname}${port ? `:${port}` : ""}`;
+function getProductionApiUrl() {
+  return apiOverride || "https://bloxygag-backend.onrender.com";
+}
+
+function getProductionSocketUrl() {
+  return socketOverride || "https://bloxygag-backend.onrender.com";
 }
 
 export default {
-  api: apiOverride || (isProduction ? getProductionHost() : getLocalApiUrl()),
-  socketUrl: socketOverride || (isProduction ? getProductionHost() : getLocalSocketUrl()),
+  api: apiOverride || (isProduction ? getProductionApiUrl() : getLocalApiUrl()),
+  socketUrl: socketOverride || (isProduction ? getProductionSocketUrl() : getLocalSocketUrl()),
   h_captcha_key: isProduction
     ? "495be111-f6a7-4ca5-9b8f-d0149998a742"
     : "20000000-ffff-ffff-ffff-000000000002",
