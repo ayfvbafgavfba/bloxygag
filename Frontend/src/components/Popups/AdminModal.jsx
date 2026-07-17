@@ -560,6 +560,30 @@ export default function AdminModal({ closeModal }) {
     }
   };
 
+  const handleResetInventory = async () => {
+    if (!spawnUser.trim()) {
+      return toast.error("Provide a target username to reset inventory.");
+    }
+
+    try {
+      const username = spawnUser.trim().toLowerCase();
+      const response = await fetch(`${config.api}/admin/reset-inventory`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getJWT()}` },
+        body: JSON.stringify({ username }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Reset failed');
+      }
+      addLog({ id: Date.now(), action: 'reset_inventory', username, deletedCount: data.deletedCount, time: new Date().toISOString() });
+      toast.success(`Reset inventory for ${username}. Removed ${data.deletedCount || 0} item(s).`);
+    } catch (err) {
+      console.error('Reset inventory failed', err);
+      toast.error(err.message || 'Failed to reset inventory');
+    }
+  };
+
   const refreshGiveaways = async () => {
     try {
       const response = await fetch(`${config.api}/giveaways`, {
@@ -1197,6 +1221,7 @@ export default function AdminModal({ closeModal }) {
                       <p className="NoUsers">Loaded {availableItemsCount} admin items.</p>
                     )}
                     <button onClick={handleSpawnItem}>Spawn Item</button>
+                    <button className="DangerBtn" onClick={handleResetInventory}>Reset Inventory</button>
                   </div>
                 </div>
               )}

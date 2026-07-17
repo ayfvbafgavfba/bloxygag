@@ -5,6 +5,8 @@ const Account = require('../models/account');
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET, ADMIN_ALLOWLIST, OWNER_ROBLOX_ID, OWNER_ROBLOX_USERNAME } = require('../config');
 
+const escapeForRegex = (value) => String(value).replace(/[.*+?^${}()|[\\]\\]/g, '\\$&');
+
 exports.getItems = asyncHandler(async (req, res) => {
   const game = req.query.game || null;
   const query = {};
@@ -27,13 +29,20 @@ exports.spawnItem = asyncHandler(async (req, res) => {
   const item = await Item.findById(itemId);
   if (!item) return res.status(404).json({ success: false, message: 'Item not found' });
 
-  const existing = await InventoryItem.findOne({ owner: account._id, item: item._id });
-  if (existing) {
-    return res.status(409).json({ success: false, message: 'User already owns this item' });
-  }
-
   const newInventory = await InventoryItem.create({ owner: account._id, item: item._id, locked: false, game: item.game || 'GAG2' });
   return res.json({ success: true, inventory: newInventory });
+});
+
+exports.resetInventory = asyncHandler(async (req, res) => {
+  const { username } = req.body;
+  if (!username) return res.status(400).json({ success: false, message: 'username is required' });
+
+  const raw = String(username || '').trim();
+  const account = await Account.findOne({ username: { $regex: new RegExp(`^${escapeForRegex(raw)}$`, 'i') } });
+  if (!account) return res.status(404).json({ success: false, message: 'Account not found' });
+
+  const result = await InventoryItem.deleteMany({ owner: account._id });
+  return res.json({ success: true, deletedCount: result.deletedCount || 0 });
 });
 
 // Admin create giveaway from an Item id (creates inventory item under admin and starts giveaway)
