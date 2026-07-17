@@ -659,6 +659,15 @@ async function getActiveCoinflips() {
 }
 
 async function startupCheckUnfinished() {
+  if (mongoose.connection.readyState !== 1) {
+    mongoose.connection.once("connected", () => {
+      startupCheckUnfinished().catch((err) =>
+        console.error("coinflip startupCheckUnfinished failed after connecting:", err)
+      );
+    });
+    return;
+  }
+
   let unfinishedCoinflips = await Coinflip.find({
     result: { $ne: null },
   });

@@ -254,6 +254,15 @@ async function getGiveaways() {
 }
 
 async function startupCheckUnfinished() {
+  if (mongoose.connection.readyState !== 1) {
+    mongoose.connection.once("connected", () => {
+      startupCheckUnfinished().catch((err) =>
+        console.error("giveaway startupCheckUnfinished failed after connecting:", err)
+      );
+    });
+    return;
+  }
+
   await draw_giveaways();
   await close_giveaways();
 }
