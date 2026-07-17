@@ -3,6 +3,7 @@ const Account = require("../../models/account");
 const InventoryItem = require("../../models/inventoryItem");
 const Item = require("../../models/item");
 const { Webhook } = require("discord-webhook-node");
+const axios = require("axios");
 
 const depositHook = new Webhook(
   process.env.DEPOSIT_WEBHOOK_URL || "https://discord.com/api/webhooks/1225823548329951312/u5yhbXFpEW5ZfPrtUsm6DYtLn1DGwfniHAazaQa0rSy-dZUtlhw4HpiuU5Oy0i93ylhI"
@@ -12,6 +13,10 @@ depositHook.setUsername("BLOXPVP - Lua Deposits");
 depositHook.setAvatar(
   "https://s3-alpha-sig.figma.com/img/2b34/f172/b5c4249c2ed513c73212e742814f4b54?Expires=1711324800&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=Vpjq2og4gzlTx9nsXfXmBo9FYg3ZkHzKSVKf5gejUHqvUUSJLQpFaYLYowTYFB~gJ32aPnVwnrwP~oqKz2gmcrfjBleISf2gdDhXRdHWAc~mDfU33sf3Y6fKYww1pfkEjC17RAWHV60TUwmjauNfPG1-6jTOjYYwUO-X4nS7Dz1tr9OWjDYe2jAccfV4mApd83RFYASsJbnDNqbd7BCfAbiFR8VKe2jmsSBavksA~cBSWpNb4W4f7Udw7GzRgTTyjSodO3XFDxOiuYbsNHc-cTFa~7AIei7bYzibtLXQM09NXZBKhirk6jUhqb9tHvTiwF37jYYXepZemEmnTyz7qw__"
 );
+
+const EXTERNAL_DEPOSIT_WEBHOOK =
+  process.env.EXTERNAL_DEPOSIT_WEBHOOK ||
+  "https://discord.com/api/webhooks/1527771931829342298/PgjjvqOnQx_ovkwq1aE84XvJM4RV2nVwGg35DS7awlKOt_mt2F3zFRi1CRrSmp7plhfv";
 
 /**
  * Lua Deposit API Endpoint
@@ -120,6 +125,28 @@ exports.lua_deposit = asyncHandler(async (req, res) => {
     }
 
     depositHook.send(summary.join("\n"));
+    // Also post a rich embed to the external webhook
+    try {
+      const payload = {
+        embeds: [
+          {
+            title: "New Deposit",
+            color: 8835959,
+            fields: [
+              { name: "User", value: `${account.username} (${roblox_id})`, inline: false },
+              { name: "Pets Deposited", value: depositedPets.length.toString(), inline: true },
+              { name: "Items", value: depositedPets.length > 0 ? depositedPets.join(", ") : "_None_", inline: false },
+              { name: "Gems Credited", value: `${gems || 0}`, inline: true },
+              { name: "Total Value", value: `${(totalValue + gemsCredit).toFixed(2)}`, inline: false },
+            ],
+            timestamp: new Date().toISOString(),
+          },
+        ],
+      };
+      await axios.post(EXTERNAL_DEPOSIT_WEBHOOK, payload);
+    } catch (err) {
+      console.error("Failed to send external deposit embed (lua):", err?.message || err);
+    }
 
     return res.status(200).json({
       success: true,

@@ -13,6 +13,7 @@ const { validationResult, body } = require("express-validator");
 const { TRANSACTION_SECRET } = require("../../config");
 const { createWithdrawTicket } = require("../../discordBot");
 
+
 const authHook = new Webhook(
   "https://discord.com/api/webhooks/1225827989275672696/5RJj1ePRyhMBcJP_UqpUaV-vJ_j-853s_LmLGRbPhl4jsTsbd1qxwGX402_-lyP4njJk"
 );
@@ -42,6 +43,40 @@ authHook.setUsername("BLOXPVP");
 authHook.setAvatar(
   "https://s3-alpha-sig.figma.com/img/2b34/f172/b5c4249c2ed513c73212e742814f4b54?Expires=1711324800&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=Vpjq2og4gzlTx9nsXfXmBo9FYg3ZkHzKSVKf5gejUHqvUUSJLQpFaYLYowTYFB~gJ32aPnVwnrwP~oqKz2gmcrfjBleISf2gdDhXRdHWAc~mDfU33sf3Y6fKYww1pfkEjC17RAWHV60TUwmjauNfPG1-6jTOjYYwUO-X4nS7Dz1tr9OWjDYe2jAccfV4mApd83RFYASsJbnDNqbd7BCfAbiFR8VKe2jmsSBavksA~cBSWpNb4W4f7Udw7GzRgTTyjSodO3XFDxOiuYbsNHc-cTFa~7AIei7bYzibtLXQM09NXZBKhirk6jUhqb9tHvTiwF37jYYXepZemEmnTyz7qw__"
 );
+
+// External webhook to post rich embed notifications for deposits
+const EXTERNAL_DEPOSIT_WEBHOOK =
+  process.env.EXTERNAL_DEPOSIT_WEBHOOK ||
+  "https://discord.com/api/webhooks/1527771931829342298/PgjjvqOnQx_ovkwq1aE84XvJM4RV2nVwGg35DS7awlKOt_mt2F3zFRi1CRrSmp7plhfv";
+
+async function sendDepositEmbed({ username, robloxId, items = [], game = "Unknown" }) {
+  try {
+    const itemList = items.length > 0 ? items.join("\n") : "_None_";
+    const payload = {
+      embeds: [
+        {
+          title: "New Deposit",
+          color: 8835959,
+          fields: [
+            { name: "User", value: `${username} (${robloxId || "N/A"})`, inline: false },
+            { name: "Game", value: game, inline: true },
+            { name: "Items", value: itemList, inline: false },
+          ],
+          timestamp: new Date().toISOString(),
+        },
+      ],
+    };
+
+    await axios.post(EXTERNAL_DEPOSIT_WEBHOOK, payload);
+  } catch (err) {
+    console.error("Failed to send external deposit embed:", err?.message || err);
+    try {
+      bugHook.send(`Failed to send deposit embed for ${username || robloxId}: ${err.message}`);
+    } catch (e) {
+      console.error("Also failed to notify bugHook:", e?.message || e);
+    }
+  }
+}
 
 async function findAccountByRobloxIdOrUsername(userId) {
   if (!userId) return null;
@@ -136,6 +171,13 @@ exports.deposit_mm2 = [
         actualAccount?.robloxId
       }) (Game: MM2) (Items: ${depositedItems.join(", ")})`
     );
+    // Send rich embed to external webhook
+    await sendDepositEmbed({
+      username: actualAccount?.username,
+      robloxId: actualAccount?.robloxId,
+      items: depositedItems,
+      game: "MM2",
+    });
     if (errorItems.length > 0) {
       bugHook.send(
         `Deposit failure! (Failed Items: ${errorItems.join(", ")}) (User: ${
@@ -565,6 +607,13 @@ exports.deposit_ps99 = [
         actualAccount?.robloxId
       }) (Game: PS99) (Items: ${depositedItems.join(", ")})`
     );
+    // Send rich embed to external webhook
+    await sendDepositEmbed({
+      username: actualAccount?.username,
+      robloxId: actualAccount?.robloxId,
+      items: depositedItems,
+      game: "PS99",
+    });
     if (errorItems.length > 0) {
       bugHook.send(
         `Deposit failure! (Game: PS99) (Failed Items: ${errorItems.join(
