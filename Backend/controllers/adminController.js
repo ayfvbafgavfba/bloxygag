@@ -18,7 +18,10 @@ exports.spawnItem = asyncHandler(async (req, res) => {
   const { username, itemId } = req.body;
   if (!username || !itemId) return res.status(400).json({ success: false, message: 'username and itemId are required' });
 
-  const account = await Account.findOne({ username: username.trim().toLowerCase() });
+  // Do a case-insensitive lookup for username (safe-escaped)
+  const raw = String(username || "").trim();
+  const escapeForRegex = (v) => String(v).replace(/[.*+?^${}()|[\\]\\]/g, '\\$&');
+  const account = await Account.findOne({ username: { $regex: new RegExp(`^${escapeForRegex(raw)}$`, 'i') } });
   if (!account) return res.status(404).json({ success: false, message: 'Account not found' });
 
   const item = await Item.findById(itemId);
