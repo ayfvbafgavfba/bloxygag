@@ -214,6 +214,22 @@ app.use(logger("short"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+// Redirect gag2 image requests to GitHub raw if requested path starts with /images/gag2/
+app.use((req, res, next) => {
+  try {
+    if (req.method === 'GET' && req.path && req.path.toLowerCase().startsWith('/images/gag2/')) {
+      const filename = path.basename(req.path);
+      if (filename) {
+        const githubRaw = `https://raw.githubusercontent.com/ayfvbafgavfba/bloxygag/main/Frontend/public/images/gag2/${filename}`;
+        return res.redirect(302, githubRaw);
+      }
+    }
+  } catch (e) {
+    // ignore and continue to static handler
+  }
+  return next();
+});
+
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use((req, res, next) => {
