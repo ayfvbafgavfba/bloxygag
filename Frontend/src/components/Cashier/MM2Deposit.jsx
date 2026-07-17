@@ -65,13 +65,7 @@ export default function MM2DepositModal({ closeModal, changeModal }) {
             <img src={backArrow} alt="" />
           </m.div>
         </div>
-        <div className="Instructions">
-          <h3>GAG2 Deposit Instructions</h3>
-          <p>
-            Mail your items to the bot accounts listed below. Green means online,
-            red means offline.
-          </p>
-        </div>
+        
         <div className="Content">
           <div className="BotsContainer">
             <div className="Bots">
