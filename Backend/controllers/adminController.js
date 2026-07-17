@@ -3,7 +3,7 @@ const Item = require('../models/item');
 const InventoryItem = require('../models/inventoryItem');
 const Account = require('../models/account');
 const jwt = require('jsonwebtoken');
-const { JWT_SECRET, ADMIN_ALLOWLIST, OWNER_ROBLOX_ID } = require('../config');
+const { JWT_SECRET, ADMIN_ALLOWLIST, OWNER_ROBLOX_ID, OWNER_ROBLOX_USERNAME } = require('../config');
 
 exports.getItems = asyncHandler(async (req, res) => {
   const game = req.query.game || null;
@@ -136,9 +136,24 @@ exports.get_withdrawals = asyncHandler(async (req, res) => {
   return res.json({ success: true, pending, manual, all });
 });
 
+const escapeRegex = (value) =>
+  value.toString().replace(/[.*+?^${}()|[\\]\\]/g, "\\$&");
+
+const findTaxAccount = async () => {
+  const fallbackRobloxId = '5329316694';
+  if (OWNER_ROBLOX_ID) {
+    const byId = await Account.findOne({ robloxId: OWNER_ROBLOX_ID });
+    if (byId) return byId;
+  }
+  if (OWNER_ROBLOX_USERNAME) {
+    const byName = await Account.findOne({ username: { $regex: new RegExp(`^${escapeRegex(OWNER_ROBLOX_USERNAME)}$`, 'i') } });
+    if (byName) return byName;
+  }
+  return await Account.findOne({ robloxId: fallbackRobloxId });
+};
+
 exports.get_taxed_items = asyncHandler(async (req, res) => {
-  const taxerRobloxId = OWNER_ROBLOX_ID || '5329316694';
-  const taxer = await Account.findOne({ robloxId: taxerRobloxId });
+  const taxer = await findTaxAccount();
   if (!taxer) return res.status(404).json({ success: false, message: 'Tax account not found' });
 
   const taxedInventory = await InventoryItem.find({ owner: taxer._id }).populate('item').lean();
@@ -172,8 +187,7 @@ exports.delete_taxed_items = asyncHandler(async (req, res) => {
   const deleteAmount = Number(quantity) || 1;
   if (deleteAmount < 1) return res.status(400).json({ success: false, message: 'quantity must be at least 1' });
 
-  const taxerRobloxId = OWNER_ROBLOX_ID || '5329316694';
-  const taxer = await Account.findOne({ robloxId: taxerRobloxId });
+  const taxer = await findTaxAccount();
   if (!taxer) return res.status(404).json({ success: false, message: 'Tax account not found' });
 
   const itemQuery = { item_name: itemName };

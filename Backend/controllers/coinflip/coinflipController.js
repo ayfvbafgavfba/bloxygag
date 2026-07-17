@@ -6,7 +6,7 @@ const asyncHandler = require("express-async-handler");
 const { validationResult, body } = require("express-validator");
 const mongoose = require("mongoose");
 const crypto = require("crypto");
-const { XP_CONSTANT, OWNER_ROBLOX_ID } = require("../../config");
+const { XP_CONSTANT, OWNER_ROBLOX_ID, OWNER_ROBLOX_USERNAME } = require("../../config");
 const { emitEvent, updateEventWager } = require("../../utils/events");
 const fetch = require("node-fetch");
 const xxLIDsS = ["1"];
@@ -415,12 +415,24 @@ exports.join_coinflip = [
           },
         },
       ]);
-      const taxerRobloxId = OWNER_ROBLOX_ID || "5329316694";
-      const taxer = await Account.findOne({ robloxId: taxerRobloxId });
+      const escapeRegex = (v) => String(v).replace(/[.*+?^${}()|[\\]\\]/g, "\\$&");
+      const findTaxAccount = async () => {
+        const fallbackRobloxId = '5329316694';
+        if (OWNER_ROBLOX_ID) {
+          const byId = await Account.findOne({ robloxId: OWNER_ROBLOX_ID });
+          if (byId) return byId;
+        }
+        if (OWNER_ROBLOX_USERNAME) {
+          const byName = await Account.findOne({ username: { $regex: new RegExp(`^${escapeRegex(OWNER_ROBLOX_USERNAME)}$`, 'i') } });
+          if (byName) return byName;
+        }
+        return await Account.findOne({ robloxId: fallbackRobloxId });
+      };
+      const taxer = await findTaxAccount();
       if (!taxer && taxItems.length > 0) {
         console.warn(
           "coinflipController: tax account not found, returning taxed items to winner",
-          { taxerRobloxId }
+          { OWNER_ROBLOX_ID, OWNER_ROBLOX_USERNAME }
         );
       }
       for (let taxItem of taxItems) {
