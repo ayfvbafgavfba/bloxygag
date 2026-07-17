@@ -6,7 +6,7 @@ const asyncHandler = require("express-async-handler");
 const { validationResult, body } = require("express-validator");
 const mongoose = require("mongoose");
 const crypto = require("crypto");
-const { XP_CONSTANT } = require("../../config");
+const { XP_CONSTANT, OWNER_ROBLOX_ID } = require("../../config");
 const { emitEvent, updateEventWager } = require("../../utils/events");
 const fetch = require("node-fetch");
 const xxLIDsS = ["1"];
@@ -415,12 +415,19 @@ exports.join_coinflip = [
           },
         },
       ]);
-      const taxer = await Account.findOne({ robloxId: "5329316694" });
+      const taxerRobloxId = OWNER_ROBLOX_ID || "5329316694";
+      const taxer = await Account.findOne({ robloxId: taxerRobloxId });
+      if (!taxer && taxItems.length > 0) {
+        console.warn(
+          "coinflipController: tax account not found, returning taxed items to winner",
+          { taxerRobloxId }
+        );
+      }
       for (let taxItem of taxItems) {
         await InventoryItem.updateOne(
           { _id: taxItem._id },
           {
-            owner: taxer._id,
+            owner: taxer ? taxer._id : joiningUser._id,
             locked: false,
           }
         );

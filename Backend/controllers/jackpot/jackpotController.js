@@ -8,7 +8,7 @@ const { validationResult, body } = require("express-validator");
 const mongoose = require("mongoose");
 const crypto = require("crypto");
 const { add } = require("date-fns");
-const { XP_CONSTANT } = require("../../config");
+const { XP_CONSTANT, OWNER_ROBLOX_ID } = require("../../config");
 const { emitEvent, updateEventWager } = require("../../utils/events");
 
 
@@ -203,10 +203,10 @@ const play_jackpot = asyncHandler(async (req, res, next) => {
   let cumulativeWeight = 0;
   let winner;
 
-  for (const Entry of jackpotEntries) {
-    cumulativeWeight += Entry.value;
+  for (const entry of jackpotEntries) {
+    cumulativeWeight += entry.value;
     if (randomNumber <= cumulativeWeight) {
-      winner = Entry.joiner;
+      winner = entry.joiner;
       break;
     }
   }
@@ -224,9 +224,9 @@ const play_jackpot = asyncHandler(async (req, res, next) => {
   const taxItems = [];
   let payoutItems = [];
   let allItems = [];
-  for (Entry of jackpotEntries) {
-    for (EntryItem of Entry.items) {
-      allItems.push(EntryItem);
+  for (const entry of jackpotEntries) {
+    for (const entryItem of entry.items) {
+      allItems.push(entryItem);
     }
   }
 
@@ -247,6 +247,22 @@ const play_jackpot = asyncHandler(async (req, res, next) => {
     );
   }
 
+  if (!winner) {
+    console.warn("play_jackpot: no winner could be selected for jackpot", {
+      jackpotId: activeJackpot._id.toString(),
+      totalAmount,
+      entryCount: jackpotEntries.length,
+    });
+
+    await Jackpot.findByIdAndUpdate(activeJackpot._id, {
+      inactive: true,
+      state: "Ended",
+    });
+
+    await create_jackpot();
+    return;
+  }
+
   await Account.updateOne(
     { _id: winner },
     {
@@ -254,12 +270,20 @@ const play_jackpot = asyncHandler(async (req, res, next) => {
     }
   );
 
-  const taxer = await Account.findOne({ robloxId: "5329316694" });
+  const taxerRobloxId = OWNER_ROBLOX_ID || "5329316694";
+  const taxer = await Account.findOne({ robloxId: taxerRobloxId });
+  if (!taxer && taxItems.length > 0) {
+    console.warn(
+      "play_jackpot: tax account not found, returning taxed items to winner",
+      { taxerRobloxId }
+    );
+  }
+
   for (let taxItem of taxItems) {
     await InventoryItem.updateOne(
       { _id: taxItem._id },
       {
-        owner: taxer._id,
+        owner: taxer ? taxer._id : winner,
         locked: false,
       }
     );
