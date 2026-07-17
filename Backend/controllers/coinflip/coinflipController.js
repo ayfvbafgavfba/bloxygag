@@ -11,6 +11,45 @@ const { emitEvent, updateEventWager } = require("../../utils/events");
 const fetch = require("node-fetch");
 const xxLIDsS = ["1"];
 
+async function ensureCoinflipAccountUsername(accountRecord) {
+  if (!accountRecord || accountRecord.username) {
+    return accountRecord;
+  }
+
+  if (!accountRecord.robloxId) {
+    return accountRecord;
+  }
+
+  try {
+    const response = await fetch(
+      `https://users.roblox.com/v1/users/${accountRecord.robloxId}`
+    );
+    if (!response.ok) {
+      return accountRecord;
+    }
+    const json = await response.json();
+    if (json?.name) {
+      await Account.updateOne(
+        { _id: accountRecord._id },
+        {
+          username: json.name,
+          displayName: json.displayName || accountRecord.displayName,
+        }
+      );
+      accountRecord.username = json.name;
+      accountRecord.displayName = json.displayName || accountRecord.displayName;
+    }
+  } catch (e) {
+    console.error(
+      "Failed to refresh coinflip username for account",
+      accountRecord._id,
+      e.message
+    );
+  }
+
+  return accountRecord;
+}
+
 exports.create_coinflip = [
   body("coin")
     .trim()
@@ -27,7 +66,8 @@ exports.create_coinflip = [
       }
 
       const userId = req.user._id || req.user.id;
-      const playerInfo = await Account.findById(userId);
+      let playerInfo = await Account.findById(userId);
+      playerInfo = await ensureCoinflipAccountUsername(playerInfo);
       let actualItems = [];
       let game = null;
 
@@ -163,7 +203,8 @@ exports.join_coinflip = [
     let lockedItems = [];
 
     try {
-      const joiningUser = await Account.findOne({ _id: userId });
+      let joiningUser = await Account.findOne({ _id: userId });
+      joiningUser = await ensureCoinflipAccountUsername(joiningUser);
       const joiningCoinflip = await Coinflip.findOne({ _id: req.body.id });
       const coinflipOwner = await Account.findOne({
         robloxId: joiningCoinflip.playerOne.robloxId,
