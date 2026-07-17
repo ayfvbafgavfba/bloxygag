@@ -172,6 +172,7 @@ exports.get_taxed_items = asyncHandler(async (req, res) => {
         game,
         itemType,
         count: 0,
+        image: item.item_image || item.image || "",
       };
     }
 

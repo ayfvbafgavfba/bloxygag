@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import "./AdminModal.css";
 import { m } from "framer-motion";
 import { useState, useEffect, useContext } from "react";
+import { resolvePetImage } from "../../utils/image";
 import { toast } from "react-hot-toast";
 import UserContext from "../../utils/UserContext";
 import { isAdminUser } from "../../utils/adminUtils";
@@ -1213,6 +1214,9 @@ export default function AdminModal({ closeModal }) {
                           return (
                             <div key={key} className="PromoCodeCard">
                               <div className="PromoCodeMain">
+                                <div className="PromoIcon">
+                                  <img src={resolvePetImage(item.image)} alt={item.itemName} />
+                                </div>
                                 <div className="PromoCodeName">{item.itemName}</div>
                                 <div className="PromoCodeMeta">Game: {item.game || 'GAG2'}</div>
                                 <div className="PromoCodeMeta">Type: {item.itemType}</div>
