@@ -219,7 +219,7 @@ Pet Catchers Values
 </ul>
 <ul class="navbar-nav navbarIcon">
 <li class="nav-item active">
-<a class="nav-link pl-0 pl-sm-4" href="https://discord.gg/cosmicvalues" target="_blank"><i class="bx bxl-discord-alt"></i></a>
+<a class="nav-link pl-0 pl-sm-4" href="https://discord.gg/yvauAc2Bz" target="_blank"><i class="bx bxl-discord-alt"></i></a>
 </li>
 <li class="nav-item">
 <a class="nav-link pl-4" href="https://youtube.com/@cosmicvaluelist" target="_blank"><i class="bx bxl-youtube"></i></a>

@@ -42,7 +42,7 @@ export default function Sidebar () {
                 </Link>
             </div>
             <div className="SocialLinks">
-                <a className="Link Discord" href='https://discord.gg/bloxpvp' target='_blank'>
+                <a className="Link Discord" href='https://discord.gg/yvauAc2Bz' target='_blank'>
                     <img src={discord} alt="Discord Logo" />
                     <p>DISCORD</p>
                 </a>

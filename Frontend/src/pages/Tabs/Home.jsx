@@ -61,7 +61,7 @@ export default function Home() {
           <img src={menu} alt="menu icon" />
           <p>MENU</p>
         </div>
-        <a className="Tab" href="https://discord.gg/bloxpvp" target="_blank">
+        <a className="Tab" href="https://discord.gg/yvauAc2Bz" target="_blank">
           <img src={mail} alt="mail icon" />
           <p>SUPPORT</p>
         </a>

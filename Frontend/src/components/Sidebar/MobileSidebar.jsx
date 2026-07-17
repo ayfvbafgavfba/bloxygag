@@ -73,7 +73,7 @@ export default function MobileSidebar({ closeMenu }) {
         <div className="SocialLinks">
           <a
             className="Link Discord"
-            href="https://discord.gg/bloxpvp"
+            href="https://discord.gg/yvauAc2Bz"
             target="_blank"
           >
             <img src={discord} alt="Discord Logo" />

@@ -152,7 +152,7 @@ export default function Navbar() {
               <p>Claims</p>
             </div>
             <div className="SocialLinks">
-              <a href="https://discord.gg/bloxpvp" target="_blank">
+              <a href="https://discord.gg/yvauAc2Bz" target="_blank">
                 <img src={discordBox} alt="Discord" className="Discord" />
               </a>
             </div>
