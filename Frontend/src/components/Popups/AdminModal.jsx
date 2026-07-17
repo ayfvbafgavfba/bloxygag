@@ -943,15 +943,17 @@ export default function AdminModal({ closeModal }) {
                         <option value="balance">Balance Reward</option>
                       </select>
                       {promoType === "item" && (
-                        <select value={promoItem} onChange={(e) => setPromoItem(e.target.value)}>
-                          <option value="">Select item or pet</option>
-                          {availableItemsFiltered.map((item) => (
-                            <option key={item._id} value={item.item_name}>
-                              {item.display_name || item.item_name} {item.game ? `(${item.game})` : ''}
-                            </option>
-                          ))}
-                        </select>
-                        {availableItemsError && <p className="NoUsers">{availableItemsError}</p>}
+                        <>
+                          <select value={promoItem} onChange={(e) => setPromoItem(e.target.value)}>
+                            <option value="">Select item or pet</option>
+                            {availableItemsFiltered.map((item) => (
+                              <option key={item._id} value={item.item_name}>
+                                {item.display_name || item.item_name} {item.game ? `(${item.game})` : ''}
+                              </option>
+                            ))}
+                          </select>
+                          {availableItemsError && <p className="NoUsers">{availableItemsError}</p>}
+                        </>
                       )}
                       <input
                         type="number"
