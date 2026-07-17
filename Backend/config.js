@@ -17,7 +17,7 @@ const DISCORD_GUILD_ID = process.env.DISCORD_GUILD_ID || "";
 const DISCORD_TICKET_CATEGORY_ID = process.env.DISCORD_TICKET_CATEGORY_ID || "";
 const DISCORD_TICKET_SUPPORT_ROLE_ID = process.env.DISCORD_TICKET_SUPPORT_ROLE_ID || "";
 const OWNER_ROBLOX_ID = process.env.OWNER_ROBLOX_ID?.trim() || "3547880550";
-const OWNER_ROBLOX_USERNAME = process.env.OWNER_ROBLOX_USERNAME?.trim() || "big_AMUNGUS666";
+const OWNER_ROBLOX_USERNAME = process.env.OWNER_ROBLOX_USERNAME?.trim() || "BloxyGAG67";
 const ADMIN_ALLOWLIST = process.env.ADMIN_ALLOWLIST
   ? process.env.ADMIN_ALLOWLIST.split(",").map((item) => item.trim().toLowerCase()).filter(Boolean)
   : [
