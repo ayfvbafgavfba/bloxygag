@@ -478,15 +478,6 @@ async function getJackpot() {
 }
 
 async function startupCheckUnfinished() {
-  if (mongoose.connection.readyState !== 1) {
-    mongoose.connection.once("connected", () => {
-      startupCheckUnfinished().catch((err) =>
-        console.error("startupCheckUnfinished failed after connecting:", err)
-      );
-    });
-    return;
-  }
-
   let currentJackpot = await Jackpot.find({ inactive: false })
     .sort({ _id: -1 })
     .limit(1)

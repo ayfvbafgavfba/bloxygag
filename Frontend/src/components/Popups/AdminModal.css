@@ -384,16 +384,84 @@
                   border-left: 3px solid #863aff;
                   border-radius: 4px;
                   transition: all 0.3s ease;
+                  gap: 10px;
 
                   &:hover {
                     background: rgba(134, 58, 255, 0.12);
                     border-left-color: #7c00ff;
                   }
 
+                  .BotStatusRow {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    flex: 1;
+                    min-width: 0;
+                  }
+
+                  .StatusDot {
+                    width: 10px;
+                    height: 10px;
+                    border-radius: 999px;
+                    flex-shrink: 0;
+                  }
+
+                  .StatusDot.Online {
+                    background: #3aff4e;
+                    box-shadow: 0 0 8px rgba(58, 255, 78, 0.25);
+                  }
+
+                  .StatusDot.Offline {
+                    background: #ff4f7d;
+                    box-shadow: 0 0 8px rgba(255, 79, 125, 0.25);
+                  }
+
                   .Username {
                     color: #e0b0ff;
                     font-weight: 500;
                     font-size: 14px;
+                    min-width: 0;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                  }
+
+                  .StatusLabel {
+                    color: #c7a6ff;
+                    font-size: 12px;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                  }
+
+                  .StatusLabel.Online {
+                    color: #7ef586;
+                  }
+
+                  .StatusLabel.Offline {
+                    color: #ff92ac;
+                  }
+
+                  .BotActions {
+                    display: flex;
+                    gap: 8px;
+                    flex-shrink: 0;
+                  }
+
+                  .StatusToggleBtn {
+                    padding: 6px 12px;
+                    background: rgba(134, 58, 255, 0.18);
+                    border: 1px solid rgba(134, 58, 255, 0.35);
+                    border-radius: 4px;
+                    color: #fff;
+                    font-weight: 600;
+                    cursor: pointer;
+                    font-size: 12px;
+                    transition: all 0.3s ease;
+                  }
+
+                  .StatusToggleBtn:hover {
+                    background: rgba(134, 58, 255, 0.28);
+                    box-shadow: 0 0 8px rgba(134, 58, 255, 0.25);
                   }
 
                   .UnbanBtn {

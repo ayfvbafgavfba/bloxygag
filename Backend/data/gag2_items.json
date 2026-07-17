@@ -1,0 +1,16 @@
+[
+  {"name":"Raccoon","display_name":"Raccoon","item_type":"pet","item_value":140000,"game":"GAG2"},
+  {"name":"Black Dragon","display_name":"Black Dragon","item_type":"pet","item_value":5000000,"game":"GAG2"},
+  {"name":"Ice Serpent","display_name":"Ice Serpent","item_type":"pet","item_value":2500000,"game":"GAG2"},
+  {"name":"Monkey","display_name":"Monkey","item_type":"pet","item_value":1500,"game":"GAG2"},
+  {"name":"Golden Dragonfly","display_name":"Golden Dragonfly","item_type":"pet","item_value":3000,"game":"GAG2"},
+  {"name":"Unicorn","display_name":"Unicorn","item_type":"pet","item_value":5000,"game":"GAG2"},
+  {"name":"Bear","display_name":"Bear","item_type":"pet","item_value":2000,"game":"GAG2"},
+  {"name":"Bald Eagle","display_name":"Bald Eagle","item_type":"pet","item_value":1000,"game":"GAG2"},
+  {"name":"Dragon's Breath","display_name":"Dragon's Breath","item_type":"seed","item_value":18000,"game":"GAG2"},
+  {"name":"Hypno Bloom","display_name":"Hypno Bloom","item_type":"seed","item_value":10000,"game":"GAG2"},
+  {"name":"Moon Bloom","display_name":"Moon Bloom","item_type":"seed","item_value":9000,"game":"GAG2"},
+  {"name":"Ghost Pepper","display_name":"Ghost Pepper","item_type":"seed","item_value":12000,"game":"GAG2"},
+  {"name":"Pomegranate","display_name":"Pomegranate","item_type":"seed","item_value":1000,"game":"GAG2"},
+  {"name":"Venom Spitter","display_name":"Venom Spitter","item_type":"seed","item_value":2000,"game":"GAG2"}
+]

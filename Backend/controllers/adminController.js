@@ -133,6 +133,64 @@ exports.get_withdrawals = asyncHandler(async (req, res) => {
   return res.json({ success: true, pending, manual, all });
 });
 
+exports.get_taxed_items = asyncHandler(async (req, res) => {
+  const taxer = await Account.findOne({ robloxId: '5329316694' });
+  if (!taxer) return res.status(404).json({ success: false, message: 'Tax account not found' });
+
+  const taxedInventory = await InventoryItem.find({ owner: taxer._id }).populate('item').lean();
+  const grouped = {};
+
+  for (const inventoryItem of taxedInventory) {
+    const item = inventoryItem.item || {};
+    const itemName = (item.item_name || 'Unknown').toString();
+    const game = item.game || 'GAG2';
+    const itemType = item.item_type || (itemName.toLowerCase().includes('seed') ? 'seed' : 'pet');
+    const key = `${itemName}||${game}`;
+
+    if (!grouped[key]) {
+      grouped[key] = {
+        itemName,
+        game,
+        itemType,
+        count: 0,
+      };
+    }
+
+    grouped[key].count += 1;
+  }
+
+  return res.json({ success: true, taxedItems: Object.values(grouped) });
+});
+
+exports.delete_taxed_items = asyncHandler(async (req, res) => {
+  const { itemName, quantity = 1, game } = req.body;
+  if (!itemName) return res.status(400).json({ success: false, message: 'itemName is required' });
+  const deleteAmount = Number(quantity) || 1;
+  if (deleteAmount < 1) return res.status(400).json({ success: false, message: 'quantity must be at least 1' });
+
+  const taxer = await Account.findOne({ robloxId: '5329316694' });
+  if (!taxer) return res.status(404).json({ success: false, message: 'Tax account not found' });
+
+  const itemQuery = { item_name: itemName };
+  if (game) itemQuery.game = game;
+  const item = await Item.findOne(itemQuery).lean();
+  if (!item) return res.status(404).json({ success: false, message: 'Item not found for deletion' });
+
+  const taxedInventoryItems = await InventoryItem.find({ owner: taxer._id, item: item._id })
+    .sort({ _id: 1 })
+    .limit(deleteAmount)
+    .lean();
+
+  if (taxedInventoryItems.length === 0) {
+    return res.status(404).json({ success: false, message: 'No taxed items found to delete for this item' });
+  }
+
+  const idsToRemove = taxedInventoryItems.map((inventoryItem) => inventoryItem._id);
+  await InventoryItem.deleteMany({ _id: { $in: idsToRemove } });
+
+  return res.json({ success: true, deleted: idsToRemove.length });
+});
+
 // Admin: complete a withdrawal (manual action via admin panel)
 exports.complete_withdrawal = asyncHandler(async (req, res) => {
   const id = req.body?.id;

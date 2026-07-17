@@ -100,6 +100,7 @@ router.get("/giveaways", giveawayController.get_giveaways);
 // GAG2 ROUTES
 router.get("/cashier/bots/gag2", botController.get_bots_gag2);
 router.post("/cashier/bots/gag2", accountController.authenticateToken, checkBanned, botController.add_gag2_bot);
+router.put("/cashier/bots/gag2/:id/status", accountController.authenticateToken, checkBanned, botController.update_gag2_bot_status);
 router.delete("/cashier/bots/gag2/:id", accountController.authenticateToken, checkBanned, botController.remove_gag2_bot);
 router.post("/deposit/mm2", accountController.authenticateToken, checkBanned, cashierController.deposit_mm2);
 router.post("/withdrawals/mm2", cashierController.get_withdraw_mm2);

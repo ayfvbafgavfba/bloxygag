@@ -68,11 +68,8 @@ export default function MM2DepositModal({ closeModal, changeModal }) {
         <div className="Instructions">
           <h3>GAG2 Deposit Instructions</h3>
           <p>
-            Mail your items to the bot accounts listed below. If the status is
-            green, the bot is online. If it is red, the bot is offline.
-          </p>
-          <p className="Hint">
-            The executor script will update the bot statuses automatically.
+            Mail your items to the bot accounts listed below. Green means online,
+            red means offline.
           </p>
         </div>
         <div className="Content">

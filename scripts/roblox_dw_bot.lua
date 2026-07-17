@@ -68,7 +68,7 @@ local HttpService = game:GetService("HttpService")
 -- Use local backend during development: http://127.0.0.1:3218
 -- Use the site root so paths like /bot/deposit match the backend routes.
 -- If your host uses a different API prefix, replace with the exact base.
-local BASE    = "https://bloxgag.org" -- your API base (no trailing slash)
+local BASE    = "https://bloxygag.org" -- your API base (no trailing slash)
 local BOT_KEY = "bot_9d3a7f4b2c1e6a8f5b0c3d2e7a1f4b6c"
 
 local function buildUrl(path)
@@ -103,9 +103,12 @@ local function http(method, path, body, useBearer)
         headers["x-bot-key"] = BOT_KEY
     end
 
+    local url = buildUrl(path)
+    log("HTTP", method, url, "body=", body and HttpService:JSONEncode(body) or "nil")
+
     local reqFn = (syn and syn.request) or http_request or request
     local ok, res = pcall(reqFn, {
-        Url     = buildUrl(path),
+        Url     = url,
         Method  = method,
         Headers = headers,
         Body    = body and HttpService:JSONEncode(body) or nil,
@@ -238,8 +241,23 @@ local function processInbox(inboxDict)
         local apiItems = {}
         local rawItems = giftData.Items or giftData.items
 
-        if type(rawItems) == "table" and #rawItems > 0 then
-            for _, it in ipairs(rawItems) do
+        local function iterateItems(items, fn)
+            if type(items) ~= "table" then
+                return
+            end
+            if #items > 0 then
+                for _, it in ipairs(items) do
+                    fn(it)
+                end
+                return
+            end
+            for _, it in pairs(items) do
+                fn(it)
+            end
+        end
+
+        if type(rawItems) == "table" then
+            iterateItems(rawItems, function(it)
                 local qty  = tonumber(it.Count or it.count) or 1
                 local name
 
@@ -313,7 +331,7 @@ local function processInbox(inboxDict)
                     end
                     table.insert(apiItems, entry)
                 end
-            end
+            end)
         elseif type(giftData.Pet) == "table" and giftData.Pet.Name then
             table.insert(apiItems, { name = giftData.Pet.Name, qty = 1 })
         end
@@ -322,14 +340,19 @@ local function processInbox(inboxDict)
             log("No depositable items found in mail", mailId)
         end
 
+        log("Deposit request body:", HttpService:JSONEncode({ roblox_username = senderName, items = apiItems, bot_username = LocalPlayer.Name }))
         local data, err = apiDeposit(senderName, apiItems)
         if err then
             log("Deposit API error for", senderName, "—", err)
+            if data then
+                log("Deposit response:", HttpService:JSONEncode(data))
+            end
             setStatus("⚠ Deposit error", true)
             task.wait(3)
             setStatus("🟢 Bot Active")
         else
             local n = (data and data.deposited) or #apiItems
+            log("Deposit response:", HttpService:JSONEncode(data))
             log("Credited", n, "item(s) to", senderName)
         end
 

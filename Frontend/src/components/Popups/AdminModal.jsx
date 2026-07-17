@@ -407,6 +407,30 @@ export default function AdminModal({ closeModal }) {
     }
   };
 
+  const handleToggleBotStatus = async (id, currentStatus) => {
+    const nextStatus = currentStatus === 'Online' ? 'Offline' : 'Online';
+    try {
+      const response = await fetch(`${config.api}/cashier/bots/gag2/${id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${getJWT()}`,
+        },
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data?.message || data?.error || `Failed to set status ${nextStatus}`);
+      }
+      addLog({ id: Date.now(), action: 'bot_status', botId: id, status: nextStatus, time: new Date().toISOString() });
+      await refreshBotUsernames();
+      toast.success(`Set bot status to ${nextStatus}.`);
+    } catch (error) {
+      console.error('Error toggling bot status:', error);
+      toast.error(error.message || 'Failed to update bot status');
+    }
+  };
+
   const handleUnbanUser = async (username) => {
     try {
       const response = await fetch(`${config.api}/disciplinary/unban`, {
@@ -1118,14 +1142,30 @@ export default function AdminModal({ closeModal }) {
                       <p className="NoUsers">No GAG2 bot accounts configured yet.</p>
                     ) : (
                       <div className="UsersList">
-                        {botUsernames.map((bot) => (
-                          <div key={bot._id} className="BannedUser">
-                            <span className="Username">{bot.username}</span>
-                            <button className="UnbanBtn" onClick={() => handleRemoveBotUsername(bot._id)}>
-                              Remove
-                            </button>
-                          </div>
-                        ))}
+                        {botUsernames.map((bot) => {
+                          const status = bot.status === 'Online' ? 'Online' : 'Offline';
+                          const isOnline = status === 'Online';
+                          return (
+                            <div key={bot._id} className="BannedUser">
+                              <div className="BotStatusRow">
+                                <span className={`StatusDot ${status}`} />
+                                <span className="Username">{bot.username}</span>
+                                <span className={`StatusLabel ${status}`}>{status}</span>
+                              </div>
+                              <div className="BotActions">
+                                <button
+                                  className="StatusToggleBtn"
+                                  onClick={() => handleToggleBotStatus(bot._id, status)}
+                                >
+                                  {isOnline ? 'Set Offline' : 'Set Online'}
+                                </button>
+                                <button className="UnbanBtn" onClick={() => handleRemoveBotUsername(bot._id)}>
+                                  Remove
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
