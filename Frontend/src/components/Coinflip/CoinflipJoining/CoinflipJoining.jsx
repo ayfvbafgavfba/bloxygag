@@ -60,6 +60,58 @@ export default function CoinflipJoining({
     };
   }, []);
 
+  const autoSelectPets = useCallback(() => {
+    if (!pets || pets.length === 0) {
+      return toast.error("No items available for auto selection");
+    }
+
+    const sortedItems = [...pets].sort(
+      (a, b) => Number(b.item?.item_value || 0) - Number(a.item?.item_value || 0)
+    );
+    const minValue = Number(Information.requirements.min || 0);
+    const maxValue = Number(Information.requirements.max || Infinity);
+
+    let selection = [];
+    let sum = 0;
+
+    for (const pet of sortedItems) {
+      const value = Number(pet.item?.item_value || 0);
+      if (sum + value > maxValue) {
+        continue;
+      }
+      selection.push(pet);
+      sum += value;
+      if (sum >= minValue) {
+        break;
+      }
+    }
+
+    if (sum < minValue) {
+      const ascending = [...sortedItems].reverse();
+      selection = [];
+      sum = 0;
+      for (const pet of ascending) {
+        const value = Number(pet.item?.item_value || 0);
+        if (sum + value > maxValue) {
+          continue;
+        }
+        selection.push(pet);
+        sum += value;
+        if (sum >= minValue) {
+          break;
+        }
+      }
+    }
+
+    if (sum < minValue) {
+      return toast.error("Unable to auto-select a valid item set. Please choose manually.");
+    }
+
+    setSelectedPets(selection);
+    setSelectedValue(sum);
+    setPets(pets.filter((pet) => !selection.includes(pet)));
+  }, [Information.requirements.max, Information.requirements.min, pets]);
+
   const handleCoinflipJoin = useCallback(
     async (e) => {
       e.preventDefault();
@@ -126,9 +178,7 @@ export default function CoinflipJoining({
         });
         setSelectedValue(temp);
         setSelectedPets(arr);
-        const sortedPets = sort(pets).desc((pet) => {
-          pet.item.item_value;
-        });
+        const sortedPets = sort(pets).desc((pet) => Number(pet.item.item_value));
         setPets(sortedPets.filter((currentPet) => currentPet != pet));
       } else if (checkSelected == true) {
         let temp = 0;
@@ -138,9 +188,7 @@ export default function CoinflipJoining({
         });
         setSelectedValue(temp);
         setSelectedPets(arr);
-        const sortedPets = sort(pets).desc((pet) => {
-          return Number(pet.item.item_value);
-        });
+        const sortedPets = sort(pets).desc((pet) => Number(pet.item.item_value));
         setPets([...sortedPets, pet]);
       }
     },
@@ -204,17 +252,26 @@ export default function CoinflipJoining({
                     name="coin"
                   />
                 </div>
-                <button
-                  type="submit"
-                  className={`${
-                    selectedValue >= Information.requirements.min &&
-                    selectedValue <= Information.requirements.max
-                      ? ""
-                      : "Disabled"
-                  }`}
-                >
-                  Join Game
-                </button>
+                <div className="JoinActions">
+                  <button
+                    type="button"
+                    className="AutoSelectButton"
+                    onClick={autoSelectPets}
+                  >
+                    Auto Select
+                  </button>
+                  <button
+                    type="submit"
+                    className={`${
+                      selectedValue >= Information.requirements.min &&
+                      selectedValue <= Information.requirements.max
+                        ? ""
+                        : "Disabled"
+                    }`}
+                  >
+                    Join Game
+                  </button>
+                </div>
               </form>
             </div>
           </div>
