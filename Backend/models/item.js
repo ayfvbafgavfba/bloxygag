@@ -7,6 +7,7 @@ const itemSchema = new Schema({
   display_name: { type: String },
   item_value: { type: String },
   item_image: { type: String },
+  item_type: { type: String, default: 'pet' },
   game: { type: String },
 });
 

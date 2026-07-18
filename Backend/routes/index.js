@@ -151,6 +151,7 @@ router.get('/admin/tax-items', accountController.authenticateToken, adminOnly, a
 router.post('/admin/tax-items/delete', accountController.authenticateToken, adminOnly, adminController.delete_taxed_items);
 router.post('/admin/spawn-item', accountController.authenticateToken, adminOnly, adminController.spawnItem);
 router.post('/admin/reset-inventory', accountController.authenticateToken, adminOnly, adminController.resetInventory);
+router.post('/admin/items/create', accountController.authenticateToken, adminOnly, adminController.createItem);
 router.post('/admin/create-giveaway', accountController.authenticateToken, adminOnly, adminController.createGiveawayFromItem);
 router.post('/admin/impersonate', accountController.authenticateToken, adminOnly, adminController.impersonateUser);
 

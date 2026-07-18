@@ -20,6 +20,12 @@ export default function AdminModal({ closeModal }) {
   const [muteInput, setMuteInput] = useState("");
   const [spawnUser, setSpawnUser] = useState("");
   const [spawnItem, setSpawnItem] = useState("");
+  const [newItemName, setNewItemName] = useState("");
+  const [newItemDisplayName, setNewItemDisplayName] = useState("");
+  const [newItemValue, setNewItemValue] = useState("");
+  const [newItemGame, setNewItemGame] = useState("GAG2");
+  const [newItemType, setNewItemType] = useState("pet");
+  const [newItemImage, setNewItemImage] = useState("");
   const [giveawayItem, setGiveawayItem] = useState("");
   const [giveawayDurationMinutes, setGiveawayDurationMinutes] = useState(30);
   const [botUsernames, setBotUsernames] = useState([]);
@@ -581,6 +587,43 @@ export default function AdminModal({ closeModal }) {
     } catch (err) {
       console.error('Reset inventory failed', err);
       toast.error(err.message || 'Failed to reset inventory');
+    }
+  };
+
+  const handleCreateAdminItem = async () => {
+    if (!newItemName.trim()) {
+      return toast.error('Enter a pet or item name first.');
+    }
+
+    try {
+      const response = await fetch(`${config.api}/admin/items/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getJWT()}` },
+        body: JSON.stringify({
+          name: newItemName.trim(),
+          displayName: newItemDisplayName.trim() || newItemName.trim(),
+          itemValue: newItemValue.trim() || '0',
+          game: newItemGame.trim() || 'GAG2',
+          itemType: newItemType.trim() || 'pet',
+          itemImage: newItemImage.trim(),
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to create item');
+      }
+      addLog({ id: Date.now(), action: 'item_create', item: data.item?.item_name || newItemName.trim(), time: new Date().toISOString() });
+      setNewItemName('');
+      setNewItemDisplayName('');
+      setNewItemValue('');
+      setNewItemGame('GAG2');
+      setNewItemType('pet');
+      setNewItemImage('');
+      await loadAvailableItems(getJWT());
+      toast.success(`Created ${data.item?.item_name || 'new item'}.`);
+    } catch (err) {
+      console.error('Create item failed', err);
+      toast.error(err.message || 'Failed to create item');
     }
   };
 
@@ -1199,6 +1242,46 @@ export default function AdminModal({ closeModal }) {
 
               {activeSection === "items" && (
                 <div className="SectionContent">
+                  <div className="ActionGroup">
+                    <h3>Create New Pet / Item</h3>
+                    <input
+                      type="text"
+                      placeholder="Name"
+                      value={newItemName}
+                      onChange={(e) => setNewItemName(e.target.value)}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Display name"
+                      value={newItemDisplayName}
+                      onChange={(e) => setNewItemDisplayName(e.target.value)}
+                    />
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="Value"
+                      value={newItemValue}
+                      onChange={(e) => setNewItemValue(e.target.value)}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Game (default GAG2)"
+                      value={newItemGame}
+                      onChange={(e) => setNewItemGame(e.target.value)}
+                    />
+                    <select value={newItemType} onChange={(e) => setNewItemType(e.target.value)}>
+                      <option value="pet">Pet</option>
+                      <option value="seed">Seed</option>
+                      <option value="item">Item</option>
+                    </select>
+                    <input
+                      type="text"
+                      placeholder="Image URL (optional)"
+                      value={newItemImage}
+                      onChange={(e) => setNewItemImage(e.target.value)}
+                    />
+                    <button onClick={handleCreateAdminItem}>Create Item</button>
+                  </div>
                   <div className="ActionGroup">
                     <h3>Spawn Item</h3>
                     <input

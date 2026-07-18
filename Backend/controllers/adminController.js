@@ -4,6 +4,7 @@ const InventoryItem = require('../models/inventoryItem');
 const Account = require('../models/account');
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET, ADMIN_ALLOWLIST, OWNER_ROBLOX_ID, OWNER_ROBLOX_USERNAME } = require('../config');
+const { buildItemPayload } = require('../utils/itemHelpers');
 
 const escapeForRegex = (value) => String(value).replace(/[.*+?^${}()|[\\]\\]/g, '\\$&');
 
@@ -43,6 +44,32 @@ exports.resetInventory = asyncHandler(async (req, res) => {
 
   const result = await InventoryItem.deleteMany({ owner: account._id });
   return res.json({ success: true, deletedCount: result.deletedCount || 0 });
+});
+
+exports.createItem = asyncHandler(async (req, res) => {
+  const { name, displayName, itemValue, game, itemType, itemImage } = req.body;
+  const itemName = String(name || '').trim();
+
+  if (!itemName) {
+    return res.status(400).json({ success: false, message: 'name is required' });
+  }
+
+  const payload = buildItemPayload({
+    name: itemName,
+    displayName,
+    itemValue,
+    game,
+    itemType,
+    itemImage,
+  });
+
+  const existing = await Item.findOne({ item_name: itemName, game: payload.game });
+  if (existing) {
+    return res.status(409).json({ success: false, message: 'Item already exists for that game' });
+  }
+
+  const created = await Item.create(payload);
+  return res.status(201).json({ success: true, item: created });
 });
 
 // Admin create giveaway from an Item id (creates inventory item under admin and starts giveaway)
