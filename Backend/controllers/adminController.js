@@ -9,9 +9,16 @@ const { buildItemPayload } = require('../utils/itemHelpers');
 const escapeForRegex = (value) => String(value).replace(/[.*+?^${}()|[\\]\\]/g, '\\$&');
 
 exports.getItems = asyncHandler(async (req, res) => {
-  const game = req.query.game || null;
+  const game = (req.query.game || '').toString().trim().toUpperCase();
+  const includeAll = req.query.all === 'true' || req.query.includeAll === 'true';
+
   const query = {};
-  if (game) query.game = game;
+  if (game) {
+    query.game = game;
+  } else if (!includeAll) {
+    query.game = 'GAG2';
+  }
+
   const items = await Item.find(query).sort({ item_name: 1 }).lean();
   return res.json({ success: true, items });
 });

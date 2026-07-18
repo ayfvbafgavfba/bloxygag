@@ -4,16 +4,14 @@ const mongoose = require('mongoose');
 const Item = require('../models/item');
 const config = require('../config');
 
-(async () => {
-  const mongoUri = process.env.MONGODB_URI || config.MONGODB_URI;
+async function importGag2Catalog({ mongoUri = process.env.MONGODB_URI || config.MONGODB_URI, itemModel = Item, connection = mongoose, logger = console } = {}) {
   if (!mongoUri) {
     throw new Error('No MongoDB URI configured');
   }
 
-  await mongoose.connect(mongoUri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  });
+  if (connection.connection?.readyState !== 1) {
+    await connection.connect(mongoUri);
+  }
 
   const filePath = path.join(__dirname, '..', 'data', 'gag2_pet_values_import.json');
   const items = JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -33,14 +31,28 @@ const config = require('../config');
       },
     };
 
-    const result = await Item.updateOne(query, update, { upsert: true });
+    const result = await itemModel.updateOne(query, update, { upsert: true });
     if (result.upsertedCount) created += 1;
     else if (result.modifiedCount) updated += 1;
   }
 
-  console.log(JSON.stringify({ created, updated, total: items.length }));
-  await mongoose.disconnect();
-})().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+  const summary = { created, updated, total: items.length };
+  logger.log(`[gag2-seed] ${JSON.stringify(summary)}`);
+  return summary;
+}
+
+if (require.main === module) {
+  importGag2Catalog()
+    .then(async (summary) => {
+      if (mongoose.connection?.readyState === 1) {
+        await mongoose.disconnect();
+      }
+      console.log(JSON.stringify(summary));
+    })
+    .catch((err) => {
+      console.error(err);
+      process.exit(1);
+    });
+}
+
+module.exports = { importGag2Catalog };

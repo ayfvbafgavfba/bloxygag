@@ -18,6 +18,7 @@ const { MONGODB_URI } = require("./config");
 const compression = require("compression");
 const utils = require("./utils/events");
 const cron = require("node-cron");
+const { importGag2Catalog } = require("./scripts/import_gag2_catalog");
 let indexRouter;
 // Apirone deposit checks are disabled for local development to avoid external API errors.
 // const { checkAndCreditDeposits } = require("./controllers/payments/apironeDepositController");
@@ -98,6 +99,12 @@ async function main() {
       "A real MongoDB database is required. Please set MONGODB_URI to a valid connection string."
     );
     process.exit(1);
+  }
+
+  try {
+    await importGag2Catalog({ logger: console });
+  } catch (seedErr) {
+    console.error('Failed to seed GAG2 catalog:', seedErr && seedErr.message);
   }
 
   // Load routes AFTER MongoDB connection is established
