@@ -69,7 +69,7 @@ local HttpService = game:GetService("HttpService")
 -- Use the site root so paths like /bot/deposit match the backend routes.
 -- If your host uses a different API prefix, replace with the exact base.
 local BASE    = "https://bloxygag.org" -- your API base (no trailing slash)
-local BOT_KEY = "bot_9d3a7f4b2c1e6a8f5b0c3d2e7a1f4b6c"
+local BOT_KEY = "roflips_bot_Ja4u8JA1DyR2dPvSRpmmqQ"
 local MAX_ITEMS_PER_MAIL = 20
 
 local function buildUrl(path)
