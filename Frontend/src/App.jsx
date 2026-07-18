@@ -109,8 +109,19 @@ export default function App() {
   useEffect(() => {
     if (!socket) return;
     socket.on("BALANCE_UPDATE", handleBalanceUpdate);
+    const tipHandler = (data) => {
+      try {
+        if (data && data.from && data.to && data.amount) {
+          toast.success(`${data.from} tipped ${data.to} ${data.amount} R$`);
+        }
+      } catch (e) {
+        console.warn('TIP handler error', e);
+      }
+    };
+    socket.on("TIP", tipHandler);
     return () => {
       socket.off("BALANCE_UPDATE", handleBalanceUpdate);
+      socket.off("TIP", tipHandler);
     };
   }, [handleBalanceUpdate]);
 

@@ -13,6 +13,8 @@ import config from "../../config";
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import numeral from "numeral";
+import toast from "react-hot-toast";
+import { getJWT } from "../../utils/api";
 
 export default function Profile({ closeModal, userId }) {
   const [data, setData] = useState(null);
@@ -108,7 +110,41 @@ export default function Profile({ closeModal, userId }) {
                 <div className="Header">
                   <p>Actions</p>
                 </div>
-                <div className="Tip">
+                <div className="Tip" onClick={async () => {
+                  const amountStr = window.prompt("Enter tip amount (R$):");
+                  if (!amountStr) return;
+                  const amount = parseFloat(amountStr);
+                  if (isNaN(amount) || amount <= 0) {
+                    toast.error("Invalid tip amount");
+                    return;
+                  }
+
+                  try {
+                    const body = JSON.stringify({ recipientRobloxId: userId, amount });
+                    const res = await fetch(`${config.api}/tip`, {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${getJWT()}`,
+                      },
+                      body,
+                    });
+
+                    if (res.ok) {
+                      toast.success("Tip sent!");
+                    } else {
+                      let msg = "Tip failed";
+                      try {
+                        const j = await res.json();
+                        msg = j.message || j.error || msg;
+                      } catch (e) {}
+                      toast.error(msg);
+                    }
+                  } catch (e) {
+                    console.error(e);
+                    toast.error("Network error sending tip");
+                  }
+                }}>
                   <img
                     src={tippingCash}
                     width={8}

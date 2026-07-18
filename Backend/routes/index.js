@@ -16,6 +16,7 @@ const coinflipController = require("../controllers/coinflip/coinflipController")
 const jackpotController = require("../controllers/jackpot/jackpotController");
 const giveawayController = require("../controllers/giveaways/giveawayController");
 const marketplaceController = require("../controllers/marketplace/marketplaceController");
+const tipController = require("../controllers/tipController");
 let cashierController;
 try {
   cashierController = require("../controllers/cashier/cashierController");
@@ -179,6 +180,9 @@ router.get("/marketplace/listings", marketplaceController.get_all_listings);
 router.post("/marketplace/listing/purchase", accountController.authenticateToken, roblox_auth_check, marketplaceController.purchase_listings);
 router.post("/marketplace/listing/delete", accountController.authenticateToken, roblox_auth_check, marketplaceController.delete_listing);
 router.post("/marketplace/listing/update", accountController.authenticateToken, roblox_auth_check, marketplaceController.update_listing);
+
+// Tipping route
+router.post("/tip", accountController.authenticateToken, roblox_auth_check, tipController.send_tip);
 
 // EVENT ROUTES
 router.get("/event/active", eventController.get_active_event);
