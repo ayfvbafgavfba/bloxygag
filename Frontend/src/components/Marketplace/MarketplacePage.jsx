@@ -7,7 +7,7 @@ import {
   cross,
   rightArrow,
   arrow,
-  cross,
+  cart,
   trash,
   pencil,
   update,
@@ -17,10 +17,10 @@ import {
   magnifyingGlass,
   gear,
   redLightning,
+  tippingCash,
 } from "../../assets/imageExport";
 import PropTypes from "prop-types";
 import MarketplaceList from "./MarketplaceList";
-  tippingCash,
 import { getJWT } from "../../utils/api";
 import { m, AnimatePresence } from "framer-motion";
 import Cart from "./Cart.jsx";
