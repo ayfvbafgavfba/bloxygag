@@ -2,6 +2,7 @@
 import { io } from "socket.io-client";
 import SocketContext from "./utils/SocketContext";
 import UserContext from "./utils/UserContext";
+import buildstamp from "./buildstamp";
 import { useCallback, useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { getJWT, clearJWT } from "./utils/api";
@@ -24,6 +25,9 @@ if (import.meta.env.PROD) {
     import.meta.env.VITE_SOCKET_URL
   );
 }
+
+// Build stamp to help verify deployed frontend version in browser console
+console.log("FRONTEND BUILD STAMP:", buildstamp);
 
 // Socket will be initialized after auth is checked to ensure a valid token
 // is provided during the Socket.IO handshake.
