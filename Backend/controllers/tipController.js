@@ -23,14 +23,26 @@ exports.send_tip = [
       const sender = await Account.findById(req.user.id).exec();
       if (!sender) return res.status(404).json({ success: false, message: "Sender not found" });
 
-      const recipientRobloxId = String(req.body.recipientRobloxId || "").trim();
       const amount = Number(req.body.amount || 0);
 
-      if (!recipientRobloxId || amount <= 0 || isNaN(amount)) {
-        return res.status(422).json({ success: false, message: "Invalid recipient or amount" });
+      if (amount <= 0 || isNaN(amount)) {
+        return res.status(422).json({ success: false, message: "Invalid amount" });
       }
 
-      const recipient = await Account.findOne({ robloxId: recipientRobloxId }).exec();
+      // Resolve recipient by userId, robloxId, or username (in that order)
+      let recipient = null;
+      if (req.body.recipientUserId) {
+        recipient = await Account.findById(String(req.body.recipientUserId)).exec();
+      }
+      if (!recipient && req.body.recipientRobloxId) {
+        recipient = await Account.findOne({ robloxId: String(req.body.recipientRobloxId) }).exec();
+      }
+      if (!recipient && req.body.recipientUsername) {
+        recipient = await Account.findOne({ username: String(req.body.recipientUsername) }).exec();
+      }
+      if (!recipient) {
+        return res.status(404).json({ success: false, message: "Recipient not found" });
+      }
       if (!recipient) return res.status(404).json({ success: false, message: "Recipient not found" });
 
       if (sender._id.equals(recipient._id)) {

@@ -25,7 +25,8 @@ export const getAdminAllowlist = () => {
 export const isAdminUser = (username, rank) => {
   if (rank && typeof rank === "string") {
     const normalizedRank = rank.trim().toLowerCase();
-    if (normalizedRank !== "user") {
+    // Only explicit elevated ranks are treated as admin
+    if (normalizedRank === "admin" || normalizedRank === "owner") {
       return true;
     }
   }

@@ -11,7 +11,8 @@ const isAllowlistedAdmin = (username) => {
 const isAdminRank = (rank) => {
   if (!rank) return false;
   const normalizedRank = rank.toString().trim().toLowerCase();
-  return normalizedRank !== 'user';
+  // Only explicit elevated ranks are considered admin
+  return normalizedRank === 'admin' || normalizedRank === 'owner';
 };
 
 module.exports = async function adminOnly(req, res, next) {
