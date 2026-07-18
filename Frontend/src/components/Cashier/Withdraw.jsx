@@ -311,7 +311,10 @@ export default function Withdraw({ closeModal, renderModal }) {
                         onClick={() => handlePetSelection(pet)}
                       >
                         <img
-                          src={resolvePetImage(pet.item.item_image)}
+                          src={resolvePetImage(
+                            pet.item.item_image,
+                            pet.item.display_name || pet.item.item_name || pet.item.name
+                          )}
                           alt=""
                         />
                         <div className="Info">
@@ -332,7 +335,10 @@ export default function Withdraw({ closeModal, renderModal }) {
                         onClick={() => handlePetSelection(pet)}
                       >
                         <img
-                          src={resolvePetImage(pet.item.item_image)}
+                          src={resolvePetImage(
+                            pet.item.item_image,
+                            pet.item.display_name || pet.item.item_name || pet.item.name
+                          )}
                           alt=""
                         />
                         <div className="Info">

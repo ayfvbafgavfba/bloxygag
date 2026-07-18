@@ -1,6 +1,7 @@
 require("dotenv").config();
 const createError = require("http-errors");
 const express = require("express");
+const fs = require("fs");
 const path = require("path");
 const cookieParser = require("cookie-parser");
 const logger = require("morgan");
@@ -227,6 +228,10 @@ app.use((req, res, next) => {
     if (req.method === 'GET' && req.path && req.path.toLowerCase().startsWith('/images/gag2/')) {
       const filename = path.basename(req.path);
       if (filename) {
+        const localFile = path.join(__dirname, 'public', 'images', 'gag2', filename);
+        if (fs.existsSync(localFile)) {
+          return next();
+        }
         const githubRaw = `https://raw.githubusercontent.com/ayfvbafgavfba/bloxygag/main/Frontend/public/images/gag2/${filename}`;
         return res.redirect(302, githubRaw);
       }

@@ -214,7 +214,10 @@ export default function JackpotJoining({ Information, closeModal, onJoinSuccess 
                         onClick={() => handlePetSelection(pet)}
                       >
                         <img
-                          src={resolvePetImage(pet.item.item_image)}
+                          src={resolvePetImage(
+                            pet.item.item_image,
+                            pet.item.display_name || pet.item.item_name || pet.item.name
+                          )}
                           alt=""
                         />
                         <div className="Info">
@@ -235,7 +238,10 @@ export default function JackpotJoining({ Information, closeModal, onJoinSuccess 
                         onClick={() => handlePetSelection(pet)}
                       >
                         <img
-                          src={resolvePetImage(pet.item.item_image)}
+                          src={resolvePetImage(
+                            pet.item.item_image,
+                            pet.item.display_name || pet.item.item_name || pet.item.name
+                          )}
                           alt=""
                         />
                         <div className="Info">

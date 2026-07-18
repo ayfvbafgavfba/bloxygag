@@ -1323,7 +1323,10 @@ export default function AdminModal({ closeModal }) {
                             <div key={key} className="PromoCodeCard">
                               <div className="PromoCodeMain">
                                 <div className="PromoIcon">
-                                  <img src={resolvePetImage(item.image)} alt={item.itemName} />
+                                  <img
+                                    src={resolvePetImage(item.image, item.itemName || item.name || item.display_name)}
+                                    alt={item.itemName}
+                                  />
                                 </div>
                                 <div className="PromoCodeName">{item.itemName}</div>
                                 <div className="PromoCodeMeta">Game: {item.game || 'GAG2'}</div>

@@ -156,12 +156,12 @@ export default function Giveaway({ Information }) {
               className={giveawayView.game == "MM2" ? "ImageContainer" : "PS99"}
             >
               <img
-                src={resolvePetImage(itemImagePath)}
+                src={resolvePetImage(itemImagePath, itemDisplayName)}
                 className="foregroundImage"
                 alt="Item"
               />
               <img
-                src={resolvePetImage(itemImagePath)}
+                src={resolvePetImage(itemImagePath, itemDisplayName)}
                 className="backgroundImage"
                 alt="Item"
               />
@@ -207,12 +207,12 @@ export default function Giveaway({ Information }) {
               className={giveawayView.game == "MM2" ? "ImageContainer" : "PS99"}
             >
               <img
-                src={resolvePetImage(itemImagePath)}
+                src={resolvePetImage(itemImagePath, itemDisplayName)}
                 className="foregroundImage"
                 alt="Item"
               />
               <img
-                src={resolvePetImage(itemImagePath)}
+                src={resolvePetImage(itemImagePath, itemDisplayName)}
                 className="backgroundImage"
                 alt="Item"
               />

@@ -196,7 +196,13 @@ export default function MarketplaceList({ closeModal, renderModal }) {
                         id={pet.name}
                         onClick={() => handlePetSelection(pet)}
                       >
-                        <img src={resolvePetImage(pet.item.item_image)} alt="" />
+                        <img
+                          src={resolvePetImage(
+                            pet.item.item_image,
+                            pet.item.display_name || pet.item.item_name || pet.item.name
+                          )}
+                          alt=""
+                        />
                         <div className="Info">
                           <p>{pet.item.display_name}</p>
                           <div className="PriceInfo">
@@ -227,7 +233,13 @@ export default function MarketplaceList({ closeModal, renderModal }) {
                         id={pet.item.item_name}
                         onClick={() => handlePetSelection(pet)}
                       >
-                        <img src={resolvePetImage(pet.item.item_image)} alt="" />
+                        <img
+                          src={resolvePetImage(
+                            pet.item.item_image,
+                            pet.item.display_name || pet.item.item_name || pet.item.name
+                          )}
+                          alt=""
+                        />
                         <div className="Info">
                           <p>{pet.item.display_name}</p>
                           <div className="PriceInfo">

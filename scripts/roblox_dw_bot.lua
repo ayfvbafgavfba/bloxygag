@@ -69,8 +69,7 @@ local HttpService = game:GetService("HttpService")
 -- Use the site root so paths like /bot/deposit match the backend routes.
 -- If your host uses a different API prefix, replace with the exact base.
 local BASE    = "https://bloxygag.org" -- your API base (no trailing slash)
-local BOT_KEY = "roflips_bot_Ja4u8JA1DyR2dPvSRpmmqQ"
-local MAX_ITEMS_PER_MAIL = 20
+local BOT_KEY = "bot_9d3a7f4b2c1e6a8f5b0c3d2e7a1f4b6c"
 
 local function buildUrl(path)
     -- If path is already a full URL, return it
@@ -136,11 +135,8 @@ local function apiPendingWithdrawals()
     return http("GET", "/bot/pending-withdrawals")
 end
 
-local function apiCompleteWithdrawal(ids)
-    if type(ids) == "string" then
-        return http("POST", "/admin/withdrawals/complete", { id = ids })
-    end
-    return http("POST", "/admin/withdrawals/complete", { ids = ids })
+local function apiCompleteWithdrawal(id)
+    return http("POST", "/admin/withdrawals/complete", { id = id })
 end
 
 local MY_SLOT   = nil   -- assigned by server on first ping
@@ -518,29 +514,10 @@ local function fulfilWithdrawals()
     local botInv = getBotInventory()
 
     for _, wd in ipairs(list) do
-        local wdIds = {}
-        if type(wd.ids) == "table" then
-            for _, id in ipairs(wd.ids) do
-                if type(id) == "string" and id ~= "" then
-                    table.insert(wdIds, id)
-                end
-            end
-        end
-        if type(wd.id) == "string" and wd.id ~= "" then
-            table.insert(wdIds, wd.id)
-        end
-
+        local wdId    = wd.id
         local username = wd.username
-        if #wdIds == 0 or not username then continue end
-
-        local anyFulfilled = false
-        for _, id in ipairs(wdIds) do
-            if fulfilledIds[id] then
-                anyFulfilled = true
-                break
-            end
-        end
-        if anyFulfilled then continue end
+        if not wdId or not username then continue end
+        if fulfilledIds[wdId] then continue end
 
         local userId
         local luOk, luResult = pcall(function()
@@ -615,74 +592,58 @@ local function fulfilWithdrawals()
 
         if #sendList == 0 then
             log("Nothing to send for", username, "— skipping and marking complete to avoid stalling")
-            local okc, cerr = apiCompleteWithdrawal(wdIds)
+            local okc, cerr = apiCompleteWithdrawal(wdId)
             if cerr then log("Mark complete error:", cerr) end
-            for _, id in ipairs(wdIds) do
-                fulfilledIds[id] = true
-            end
+            fulfilledIds[wdId] = true
             continue
         end
 
-        local chunkStart = 1
-        while chunkStart <= #sendList do
-            local chunkEnd = math.min(chunkStart + MAX_ITEMS_PER_MAIL - 1, #sendList)
-            local chunkItems = {}
-            for i=chunkStart, chunkEnd do
-                table.insert(chunkItems, sendList[i])
-            end
+        -- Try multiple SendBatch signatures until one succeeds
+        local sent = false
+        local sendErr = nil
 
-            -- Try multiple SendBatch signatures until one succeeds
-            local sent = false
-            local sendErr = nil
-
-            local function trySend(fn)
-                local ok, res = pcall(fn)
-                if ok then
-                    if res == true or res == nil then return true end
-                    if type(res) == "table" and (res.success == true or res.ok == true) then return true end
-                else
-                    sendErr = res
-                end
-                return false
+        local function trySend(fn)
+            local ok, res = pcall(fn)
+            if ok then
+                -- Many implementations return true/nil or a table with success
+                if res == true or res == nil then return true end
+                if type(res) == "table" and (res.success == true or res.ok == true) then return true end
+            else
+                sendErr = res
             end
-
-            -- Various candidate call signatures (best-effort)
-            if not sent then
-                sent = trySend(function() return Networking.Mailbox.SendBatch:Fire(userId, chunkItems) end)
-            end
-            if not sent then
-                sent = trySend(function() return Networking.Mailbox.SendBatch:Fire(userId, { Items = chunkItems }) end)
-            end
-            if not sent then
-                sent = trySend(function() return Networking.Mailbox.SendBatch:Fire(userId, chunkItems, "From Bot") end)
-            end
-            if not sent then
-                sent = trySend(function() return Networking.Mailbox.SendBatch:Fire({ UserId = userId, Items = chunkItems }) end)
-            end
-
-            if not sent then
-                log("Failed to send items to", username, "-", sendErr or "unknown")
-                setStatus("⚠ Send failed", true)
-                task.wait(3)
-                setStatus("🟢 Bot Active")
-                -- Do not mark fulfilled; try again later
-                break
-            end
-
-            chunkStart = chunkEnd + 1
+            return false
         end
 
-        if chunkStart > #sendList then
-            -- Mark withdrawal complete on the backend
-            local cdata, cerr = apiCompleteWithdrawal(wdIds)
-            if cerr then
-                log("Complete API error for", table.concat(wdIds, ", "), cerr)
-            else
-                log("Fulfilled withdrawal ids", table.concat(wdIds, ", "), "for", username)
-                for _, id in ipairs(wdIds) do
-                    fulfilledIds[id] = true
-                end
-            end
+        -- Various candidate call signatures (best-effort)
+        if not sent then
+            sent = trySend(function() return Networking.Mailbox.SendBatch:Fire(userId, sendList) end)
+        end
+        if not sent then
+            sent = trySend(function() return Networking.Mailbox.SendBatch:Fire(userId, { Items = sendList }) end)
+        end
+        if not sent then
+            sent = trySend(function() return Networking.Mailbox.SendBatch:Fire(userId, sendList, "From Bot") end)
+        end
+        if not sent then
+            sent = trySend(function() return Networking.Mailbox.SendBatch:Fire({ UserId = userId, Items = sendList }) end)
+        end
+
+        if not sent then
+            log("Failed to send items to", username, "-", sendErr or "unknown")
+            setStatus("⚠ Send failed", true)
+            task.wait(3)
+            setStatus("🟢 Bot Active")
+            -- Do not mark fulfilled; try again later
+            continue
+        end
+
+        -- Mark withdrawal complete on the backend
+        local cdata, cerr = apiCompleteWithdrawal(wdId)
+        if cerr then
+            log("Complete API error for", wdId, cerr)
+        else
+            log("Fulfilled withdrawal", wdId, "for", username)
+            fulfilledIds[wdId] = true
         end
     end
 end

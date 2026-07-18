@@ -3,7 +3,7 @@ const url = require('url');
 const port = process.env.PORT || 3220;
 
 const items = [
-  { item_name: 'Raccoon', display_name: 'Raccoon', item_image: 'https://raw.githubusercontent.com/ayfvbafgavfba/bloxygag/main/Frontend/public/images/gag2/big_raccoon.webp', item_value: '100' },
+  { item_name: 'Raccoon', display_name: 'Raccoon', item_image: '/images/raccoon.png', item_value: '100' },
   { item_name: 'Unicorn', display_name: 'Unicorn', item_image: 'https://raw.githubusercontent.com/ayfvbafgavfba/bloxygag/main/Frontend/public/images/gag2/unicorn_rainbow.webp', item_value: '5000' },
   { item_name: 'Bear', display_name: 'Bear', item_image: 'https://raw.githubusercontent.com/ayfvbafgavfba/bloxygag/main/Frontend/public/images/gag2/bear_rainbow.webp', item_value: '200' },
   { item_name: 'Black Dragon', display_name: 'Black Dragon', item_image: 'https://raw.githubusercontent.com/ayfvbafgavfba/bloxygag/main/Frontend/public/images/gag2/black_dragon.webp', item_value: '1000' },

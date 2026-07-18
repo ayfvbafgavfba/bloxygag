@@ -31,18 +31,16 @@ function attachImageFallback(img) {
         const filename = parts[parts.length - 1] || '';
         if (!filename) return null;
         if (/\.(png|jpe?g|webp|svg)$/i.test(filename)) {
-          return `https://raw.githubusercontent.com/ayfvbafgavfba/bloxygag/main/Frontend/public/images/gag2/${filename}`;
+          return `/images/gag2/${filename}`;
         }
         return null;
       };
 
-      const gag2GithubUrl = getGithubRawUrl(src);
-      const isGag2Source = /gag2\.gg|cdn\.gag2\.gg|bloxygag\.org\/images\/gag2|\/images\/gag2\/|images\/gag2\/|\/gag2\/|^gag2\//i.test(src);
+      const gag2LocalUrl = getGithubRawUrl(src);
+      const isGag2Source = /gag2\.gg|cdn\.gag2\.gg|bloxygag\.org\/images\/gag2|\/images\/gag2\/|images\/gag2\/|\/gag2\/|raw\.githubusercontent\.com/i.test(src);
 
-      if (gag2GithubUrl && isGag2Source && !/raw\.githubusercontent\.com/i.test(src)) {
-        img.src = gag2GithubUrl;
-      } else if (/raw\.githubusercontent\.com/i.test(src)) {
-        img.src = FALLBACK_IMAGE;
+      if (gag2LocalUrl && isGag2Source) {
+        img.src = gag2LocalUrl;
       } else {
         img.src = FALLBACK_IMAGE;
       }

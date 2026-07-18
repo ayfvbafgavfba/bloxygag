@@ -24,7 +24,7 @@ const ADMIN_ALLOWLIST = process.env.ADMIN_ALLOWLIST
       "welovemontana",
       "bloxpvp",
       "big_AMUNGUS666",
-      "ineedvclolhaha",
+      "mangomustard338",
       "4etg04",
       "blazakinai",
       "ninjawwr112ndalt",

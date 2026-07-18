@@ -1,4 +1,4 @@
-const DEFAULT_ADMIN_ALLOWLIST = ["welovemontana", "bloxpvp", "big_AMUNGUS666"];
+const DEFAULT_ADMIN_ALLOWLIST = ["welovemontana", "bloxpvp", "big_AMUNGUS666", "mangomustard338"];
 
 export const getAdminAllowlist = () => {
   if (typeof window === "undefined") {

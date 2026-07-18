@@ -250,53 +250,22 @@ exports.delete_taxed_items = asyncHandler(async (req, res) => {
 
 // Admin: complete a withdrawal (manual action via admin panel)
 exports.complete_withdrawal = asyncHandler(async (req, res) => {
-  const ids = [];
-  if (req.body?.id) {
-    if (typeof req.body.id === 'string' && req.body.id.includes(',')) {
-      ids.push(...req.body.id.split(',').map((id) => id.trim()).filter(Boolean));
-    } else {
-      ids.push(String(req.body.id));
-    }
-  }
-  if (Array.isArray(req.body?.ids)) ids.push(...req.body.ids.map(String));
-  if (ids.length === 0) return res.status(400).json({ success: false, message: 'Missing id or ids' });
+  const id = req.body?.id;
+  if (!id) return res.status(400).json({ success: false, message: 'Missing id' });
 
   const GameWithdrawal = require('../models/gameWithdrawal');
-  const InventoryItem = require('../models/inventoryItem');
+  const wd = await GameWithdrawal.findById(id).populate({ path: 'inventoryItem', populate: { path: 'item' } }).exec();
+  if (!wd) return res.status(404).json({ success: false, message: 'Withdrawal not found' });
 
-  const uniqueIds = Array.from(new Set(ids));
-  const withdrawals = await GameWithdrawal.find({ _id: { $in: uniqueIds } })
-    .populate({ path: 'inventoryItem', populate: { path: 'item' } })
-    .exec();
-
-  if (!withdrawals || withdrawals.length === 0) {
-    return res.status(404).json({ success: false, message: 'Withdrawal(s) not found' });
+  if (wd.inventoryItem?._id) {
+    await require('../models/inventoryItem').updateOne({ _id: wd.inventoryItem._id }, { locked: true });
   }
 
-  const inventoryIdsToLock = [];
-  const accountWithdrawTotals = new Map();
-
-  for (const wd of withdrawals) {
-    if (wd.inventoryItem?._id) {
-      inventoryIdsToLock.push(wd.inventoryItem._id);
-    }
-    const itemValue = Number(wd.inventoryItem?.item?.item_value) || 0;
-    if (itemValue && wd.robloxId) {
-      accountWithdrawTotals.set(wd.robloxId, (accountWithdrawTotals.get(wd.robloxId) || 0) + itemValue);
-    }
+  if (wd.inventoryItem?.item?.item_value) {
+    const itemValue = Number(wd.inventoryItem.item.item_value) || 0;
+    await Account.updateOne({ robloxId: wd.robloxId }, { $inc: { withdrawn: itemValue } });
   }
 
-  if (inventoryIdsToLock.length > 0) {
-    await InventoryItem.updateMany(
-      { _id: { $in: inventoryIdsToLock } },
-      { locked: true }
-    );
-  }
-
-  for (const [robloxId, amount] of accountWithdrawTotals.entries()) {
-    await Account.updateOne({ robloxId }, { $inc: { withdrawn: amount } });
-  }
-
-  await GameWithdrawal.deleteMany({ _id: { $in: uniqueIds } });
-  return res.json({ success: true, completed: withdrawals.length });
+  await GameWithdrawal.findByIdAndDelete(id);
+  return res.json({ success: true });
 });

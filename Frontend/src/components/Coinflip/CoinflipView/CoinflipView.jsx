@@ -287,12 +287,18 @@ export default function CoinflipViewing({ Information, closeModal }) {
                         key={item._id + Math.random()}
                       >
                         <img
-                          src={resolvePetImage(item.item.item_image)}
+                          src={resolvePetImage(
+                            item.item.item_image,
+                            item.item.display_name || item.item.item_name || item.item.name
+                          )}
                           className="foregroundImage"
                           alt="Item"
                         />
                         <img
-                          src={resolvePetImage(item.item.item_image)}
+                          src={resolvePetImage(
+                            item.item.item_image,
+                            item.item.display_name || item.item.item_name || item.item.name
+                          )}
                           className="backgroundImage"
                           alt="Item"
                         />
@@ -322,12 +328,18 @@ export default function CoinflipViewing({ Information, closeModal }) {
                           key={item._id + Math.random()}
                         >
                           <img
-                            src={resolvePetImage(item.item.item_image)}
+                            src={resolvePetImage(
+                              item.item.item_image,
+                              item.item.display_name || item.item.item_name || item.item.name
+                            )}
                             className="foregroundImage"
                             alt="Item"
                           />
                           <img
-                            src={resolvePetImage(item.item.item_image)}
+                            src={resolvePetImage(
+                              item.item.item_image,
+                              item.item.display_name || item.item.item_name || item.item.name
+                            )}
                             className="backgroundImage"
                             alt="Item"
                           />

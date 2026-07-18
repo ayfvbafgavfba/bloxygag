@@ -173,7 +173,10 @@ function CartFilled({ CartItems, updateItems, purchaseItems }) {
                   <div className="Info">
                     <div className="ImageContainer">
                       <img
-                        src={resolvePetImage(CartItem.item.item.item_image)}
+                        src={resolvePetImage(
+                          CartItem.item.item.item_image,
+                          CartItem.item.item.display_name || CartItem.item.item.item_name || CartItem.item.item.name
+                        )}
                         className="foregroundImage"
                         alt="Item"
                       />
@@ -194,12 +197,6 @@ function CartFilled({ CartItems, updateItems, purchaseItems }) {
                       </p>
                     </div>
                   </div>
-                  <img
-                    src={cartCross}
-                    onClick={() => handleRemoveFromCart(CartItem)}
-                    alt="remove icon"
-                    className="Remove"
-                  />
                 </m.div>
               );
             })}

@@ -481,12 +481,18 @@ export default function MarketplacePage() {
                           }
                         >
                           <img
-                            src={resolvePetImage(listing.item.item.item_image)}
+                            src={resolvePetImage(
+                              listing.item.item.item_image,
+                              listing.item.item.display_name || listing.item.item.item_name || listing.item.item.name
+                            )}
                             className="foregroundImage"
                             alt="Item"
                           />
                           <img
-                            src={resolvePetImage(listing.item.item.item_image)}
+                            src={resolvePetImage(
+                              listing.item.item.item_image,
+                              listing.item.item.display_name || listing.item.item.item_name || listing.item.item.name
+                            )}
                             className="backgroundImage"
                             alt="Item"
                           />
@@ -618,12 +624,18 @@ function MyListing({ Information }) {
             }
           >
             <img
-              src={resolvePetImage(Information.item.item.item_image)}
+              src={resolvePetImage(
+                Information.item.item.item_image,
+                Information.item.item.display_name || Information.item.item.item_name || Information.item.item.name
+              )}
               className="foregroundImage"
               alt="Item"
             />
             <img
-              src={resolvePetImage(Information.item.item.item_image)}
+              src={resolvePetImage(
+                Information.item.item.item_image,
+                Information.item.item.display_name || Information.item.item.item_name || Information.item.item.name
+              )}
               className="backgroundImage"
               alt="Item"
             />
