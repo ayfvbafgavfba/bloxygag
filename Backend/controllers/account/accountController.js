@@ -216,8 +216,10 @@ exports.connect_roblox = [
           isLegacyDescription || !existingDescription
             ? generateRandomDescription()
             : existingDescription;
+        const bioText = String(userData.blurb || userData.description || "").trim();
+        const bioMatchesCode = bioContainsCode(bioText, descriptionToUse);
 
-        if (userData.blurb === accountData.description && !isLegacyDescription) {
+        if (bioMatchesCode) {
           const token = jwt.sign(
             { id: accountData._id, username: accountData.username },
             JWT_SECRET
@@ -228,6 +230,7 @@ exports.connect_roblox = [
             {
               $push: { ips: { ip: req.ip } },
               thumbnail: userThumbnail[0].imageUrl,
+              description: descriptionToUse,
             }
           );
 
@@ -382,4 +385,32 @@ function generateRandomDescription() {
   }
   // Ensure the description is reasonably short
   return `${prefix} ${words.join(" ")}`;
+}
+
+function bioContainsCode(bioText, codeText) {
+  const normalize = (value) =>
+    String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, " ");
+
+  const normalizedBio = normalize(bioText);
+  const normalizedCode = normalize(codeText);
+
+  if (!normalizedBio || !normalizedCode) return false;
+  return normalizedBio.includes(normalizedCode);
+}
+
+function bioContainsCode(bioText, codeText) {
+  const normalize = (value) =>
+    String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, " ");
+
+  const normalizedBio = normalize(bioText);
+  const normalizedCode = normalize(codeText);
+
+  if (!normalizedBio || !normalizedCode) return false;
+  return normalizedBio.includes(normalizedCode);
 }

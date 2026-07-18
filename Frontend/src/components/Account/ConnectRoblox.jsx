@@ -203,7 +203,7 @@
                   {step === 2 && (
                     <div className="form-group">
                       <p className="inputLabel">
-                        Put the following code into your roblox description
+                        Put the following code into your Roblox bio, then click Complete.
                       </p>
                       <div className="text">
                         <img
@@ -226,7 +226,7 @@
                     }
                   /> */}
 
-                  <button type="submit">Connect</button>
+                  <button type="submit">{step === 2 ? "Complete" : "Connect"}</button>
                 </form>
               </div>
               <div className="Footer">
