@@ -20,7 +20,7 @@ import { resolvePetImage } from "../../utils/image";
 export default function Profile({ closeModal, userId }) {
   const [data, setData] = useState(null);
   const [inventory, setInventory] = useState([]);
-  const [selectedItemId, setSelectedItemId] = useState(null);
+  const [selectedItemIds, setSelectedItemIds] = useState([]);
   const [showInventoryTip, setShowInventoryTip] = useState(false);
 
   useEffect(() => {
@@ -141,7 +141,7 @@ export default function Profile({ closeModal, userId }) {
                 <div
                   className="Tip"
                   onClick={() => {
-                    setSelectedItemId(null);
+                    setSelectedItemIds([]);
                     setShowInventoryTip((value) => !value);
                   }}
                 >
@@ -162,17 +162,25 @@ export default function Profile({ closeModal, userId }) {
                     ) : (
                       <>
                         <div className="TipHeader">
-                          <p>Tip one of your pets to {data?.username || "this user"}</p>
-                          <p className="TipSubtext">Click a pet card, then press SEND TIP</p>
+                          <p>Tip one or more of your pets to {data?.username || "this user"}</p>
+                          <p className="TipSubtext">Click pet cards to select them, then press SEND TIP</p>
                         </div>
                         <div className="InventoryGrid">
                           {inventory.map((pet) => {
                             const itemName = pet.item?.display_name || pet.item?.item_name || pet.item?.name || "Unknown Pet";
+                            const isSelected = selectedItemIds.includes(pet._id);
                             return (
                               <div
                                 key={pet._id}
-                                className={`InventoryItem ${selectedItemId === pet._id ? "Selected" : ""}`}
-                                onClick={() => setSelectedItemId(pet._id)}
+                                className={`InventoryItem ${isSelected ? "Selected" : ""}`}
+                                onClick={() => {
+                                  setSelectedItemIds((current) => {
+                                    if (current.includes(pet._id)) {
+                                      return current.filter((id) => id !== pet._id);
+                                    }
+                                    return [...current, pet._id];
+                                  });
+                                }}
                               >
                                 <img
                                   src={resolvePetImage(
@@ -190,23 +198,25 @@ export default function Profile({ closeModal, userId }) {
                           })}
                         </div>
                         <div
-                          className={`SendTipButton ${!selectedItemId ? "Disabled" : ""}`}
+                          className={`SendTipButton ${selectedItemIds.length === 0 ? "Disabled" : ""}`}
                           onClick={async () => {
-                            if (!selectedItemId) {
-                              toast.error("Select a pet to tip");
+                            if (selectedItemIds.length === 0) {
+                              toast.error("Select at least one pet to tip");
                               return;
                             }
 
-                            const selectedItem = inventory.find((pet) => pet._id === selectedItemId);
-                            const itemName = selectedItem?.item?.display_name || selectedItem?.item?.item_name || selectedItem?.item?.name || "pet";
+                            const selectedItems = inventory.filter((pet) => selectedItemIds.includes(pet._id));
+                            const itemNames = selectedItems
+                              .map((pet) => pet.item?.display_name || pet.item?.item_name || pet.item?.name || "pet")
+                              .join(", ");
 
                             const confirmTip = window.confirm(
-                              `Send ${itemName} to ${data?.username || "this user"}? This will transfer the pet from your inventory.`
+                              `Send ${selectedItemIds.length} pet${selectedItemIds.length > 1 ? "s" : ""} to ${data?.username || "this user"}?\n${itemNames}`
                             );
                             if (!confirmTip) return;
 
                             try {
-                              const body = JSON.stringify({ recipientRobloxId: userId, itemId: selectedItemId });
+                              const body = JSON.stringify({ recipientRobloxId: userId, itemIds: selectedItemIds });
                               const res = await fetch(`${config.api}/tip`, {
                                 method: "POST",
                                 headers: {
@@ -218,8 +228,8 @@ export default function Profile({ closeModal, userId }) {
 
                               if (res.ok) {
                                 toast.success("Pet tip sent!");
-                                setInventory((current) => current.filter((pet) => pet._id !== selectedItemId));
-                                setSelectedItemId("");
+                                setInventory((current) => current.filter((pet) => !selectedItemIds.includes(pet._id)));
+                                setSelectedItemIds([]);
                               } else {
                                 let msg = "Tip failed";
                                 try {
@@ -242,7 +252,7 @@ export default function Profile({ closeModal, userId }) {
                             height={8}
                             alt="tipping icon"
                           />
-                          <p>SEND TIP</p>
+                          <p>SEND TIP{selectedItemIds.length > 0 ? ` (${selectedItemIds.length})` : ""}</p>
                         </div>
                       </>
                     )}

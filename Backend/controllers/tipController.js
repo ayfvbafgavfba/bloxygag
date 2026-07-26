@@ -49,53 +49,72 @@ exports.send_tip = [
 
       const trimmedItem = String(req.body.item || req.body.itemName || "").trim();
       const itemId = String(req.body.itemId || "").trim();
+      const itemIds = Array.isArray(req.body.itemIds) ? req.body.itemIds : [];
       const amount = Number(req.body.amount || 0);
 
       let payload;
-      if (trimmedItem || itemId) {
-        // Tip a pet from sender to recipient.
-        let inventoryItem = null;
+      if (trimmedItem || itemId || itemIds.length > 0) {
+        const idsToTip = [];
+        if (itemIds.length > 0) {
+          idsToTip.push(...itemIds.filter((id) => /^[0-9a-fA-F]{24}$/.test(String(id))));
+        } else if (itemId && /^[0-9a-fA-F]{24}$/.test(itemId)) {
+          idsToTip.push(itemId);
+        }
 
-        if (itemId && /^[0-9a-fA-F]{24}$/.test(itemId)) {
-          inventoryItem = await InventoryItem.findOne({ _id: itemId, owner: sender._id, locked: false })
+        let inventoryItems = [];
+        if (idsToTip.length > 0) {
+          inventoryItems = await InventoryItem.find({
+            _id: { $in: idsToTip },
+            owner: sender._id,
+            locked: false,
+          })
             .populate("item")
             .exec();
         }
 
-        if (!inventoryItem && trimmedItem) {
+        if (inventoryItems.length === 0 && trimmedItem) {
           const ownedItems = await InventoryItem.find({ owner: sender._id, locked: false })
             .populate("item")
             .exec();
 
-          inventoryItem = ownedItems.find((ownedItem) => {
+          const matchingItem = ownedItems.find((ownedItem) => {
             const item = ownedItem.item || {};
             const displayName = String(item.display_name || item.item_name || item.name || "").trim().toLowerCase();
             return displayName === trimmedItem.toLowerCase();
           });
+
+          if (matchingItem) {
+            inventoryItems = [matchingItem];
+          }
         }
 
-        if (!inventoryItem) {
+        if (inventoryItems.length === 0) {
           return res.status(404).json({ success: false, message: "Pet not found in your inventory" });
         }
 
-        await InventoryItem.updateOne(
-          { _id: inventoryItem._id },
+        const updateIds = inventoryItems.map((item) => item._id);
+        await InventoryItem.updateMany(
+          { _id: { $in: updateIds } },
           { owner: recipient._id, locked: false }
         ).exec();
+
+        const itemNames = inventoryItems.map((inventoryItem) =>
+          inventoryItem.item ? inventoryItem.item.display_name || inventoryItem.item.item_name || inventoryItem.item.name : trimmedItem
+        );
 
         payload = {
           from: sender.username,
           fromRobloxId: sender.robloxId,
           to: recipient.username,
           toRobloxId: recipient.robloxId,
-          item: inventoryItem.item ? inventoryItem.item.display_name || inventoryItem.item.item_name || inventoryItem.item.name : trimmedItem,
+          item: itemNames.join(", "),
           amount: 0,
           time: new Date(),
         };
 
         emitEvent("TIP", payload);
         try {
-          const message = `${sender.username} (${sender.robloxId}) tipped ${recipient.username} (${recipient.robloxId}) with pet ${payload.item}`;
+          const message = `${sender.username} (${sender.robloxId}) tipped ${recipient.username} (${recipient.robloxId}) with pet${itemNames.length > 1 ? "s" : ""} ${itemNames.join(", ")}`;
           tipHook.send(message);
         } catch (e) {
           console.warn("Tip webhook failed:", e && e.message);
