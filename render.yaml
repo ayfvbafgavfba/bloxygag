@@ -47,8 +47,10 @@ services:
     publishPath: Frontend/dist
     envVars:
       - key: VITE_API_URL
+        value: https://bloxygag-backend.onrender.com
         sync: false
       - key: VITE_SOCKET_URL
+        value: https://bloxygag-backend.onrender.com
         sync: false
       - key: HCAPTCHA_SECRET
         sync: false

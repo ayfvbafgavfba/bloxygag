@@ -82,6 +82,64 @@ exports.auto_login = asyncHandler(async (req, res) => {
   }
 });
 
+const ROFLIPS_BASE_URL = "https://growagarden.roflips.com";
+const ROFLIPS_BASE_NAMES = new Set([
+  "raccoon",
+  "black dragon",
+  "ice serpent",
+  "monkey",
+  "golden dragonfly",
+  "unicorn",
+  "bear",
+  "bald eagle",
+  "butterfly",
+  "bunny",
+  "frog",
+  "deer",
+  "owl",
+  "turtle",
+  "firefly",
+  "robin",
+]);
+
+function normalizeRoflipsPetName(itemName = "") {
+  let normalized = String(itemName || "").trim().toLowerCase();
+  if (!normalized) return null;
+  normalized = normalized.replace(/’/g, "'").replace(/["']/g, "");
+
+  if (normalized.startsWith("rainbow mega ")) {
+    normalized = normalized.replace(/^rainbow mega\s+/, "rainbow-huge-");
+  } else if (normalized.startsWith("mega ")) {
+    normalized = normalized.replace(/^mega\s+/, "huge-");
+  } else if (normalized.startsWith("rainbow big ")) {
+    normalized = normalized.replace(/^rainbow big\s+/, "rainbow-big-");
+  } else if (normalized.startsWith("big ")) {
+    normalized = normalized.replace(/^big\s+/, "big-");
+  } else if (normalized.startsWith("rainbow ")) {
+    normalized = normalized.replace(/^rainbow\s+/, "rainbow-");
+  }
+
+  normalized = normalized.replace(/\s+/g, "-");
+
+  const baseName = normalized
+    .replace(/^rainbow-huge-/, "")
+    .replace(/^huge-/, "")
+    .replace(/^rainbow-big-/, "")
+    .replace(/^big-/, "")
+    .replace(/^rainbow-/, "");
+
+  if (!ROFLIPS_BASE_NAMES.has(baseName)) return null;
+  return normalized;
+}
+
+function getRoflipsFallbackImage(item) {
+  if (!item) return null;
+  const itemName = String(item.item_name || item.display_name || item.name || "").trim();
+  const normalized = normalizeRoflipsPetName(itemName);
+  if (!normalized) return null;
+  return `${ROFLIPS_BASE_URL}/${normalized}.png`;
+}
+
 exports.load_inventory = asyncHandler(async (req, res) => {
   try {
     const userItems = await InventoryItem.find({
@@ -93,7 +151,25 @@ exports.load_inventory = asyncHandler(async (req, res) => {
       .lean()
       .exec();
 
-    const validItems = userItems.filter((userItem) => userItem.item);
+    const validItems = userItems
+      .filter((userItem) => userItem.item)
+      .map((userItem) => {
+        const fallbackImage = getRoflipsFallbackImage(userItem.item);
+        const imageSource = String(userItem.item.item_image || "").trim().toLowerCase();
+        const isMissingImage = !imageSource || ["null", "undefined", "none", "n/a"].includes(imageSource);
+
+        if (fallbackImage && isMissingImage) {
+          return {
+            ...userItem,
+            item: {
+              ...userItem.item,
+              item_image: fallbackImage,
+            },
+          };
+        }
+        return userItem;
+      });
+
     const totalValue = validItems.reduce(
       (acc, userItem) => acc + Number(userItem.item?.item_value || 0),
       0

@@ -1,16 +1,7 @@
 /** @format */
 
-const localDevApi = "http://127.0.0.1:3220";
+const localDevApi = "http://127.0.0.1:3218";
 const localDevSocket = "http://127.0.0.1:6565";
-
-function getBaseUrl() {
-  if (typeof window === "undefined") {
-    return localDevApi;
-  }
-
-  const { hostname, port, protocol } = window.location;
-  return `${protocol}//${hostname}${port ? `:${port}` : ""}`;
-}
 
 function getLocalApiUrl() {
   if (typeof window === "undefined") {
@@ -19,13 +10,14 @@ function getLocalApiUrl() {
 
   const { hostname, port, protocol } = window.location;
   const isLocalHost = hostname === "localhost" || hostname === "127.0.0.1";
-  if (isLocalHost) {
-    return localDevApi;
-  }
 
-  const isViteDev = port === "5173";
-  if (isViteDev) {
-    return localDevApi;
+  if (isLocalHost) {
+    // When running Vite locally, backend is on the local development port.
+    // When serving a built app from the local backend on localhost, use the same origin.
+    if (port === "5173") {
+      return localDevApi;
+    }
+    return `${protocol}//${hostname}${port ? `:${port}` : ""}`;
   }
 
   return `${protocol}//${hostname}${port ? `:${port}` : ""}`;
@@ -37,10 +29,13 @@ function getLocalSocketUrl() {
   }
 
   const { hostname, port, protocol } = window.location;
-  const isViteDev = port === "5173" || hostname === "localhost" || hostname === "127.0.0.1";
+  const isLocalHost = hostname === "localhost" || hostname === "127.0.0.1";
 
-  if (isViteDev) {
-    return localDevSocket;
+  if (isLocalHost) {
+    if (port === "5173") {
+      return localDevSocket;
+    }
+    return `${protocol}//${hostname}${port ? `:${port}` : ""}`;
   }
 
   return `${protocol}//${hostname}${port ? `:${port}` : ""}`;
