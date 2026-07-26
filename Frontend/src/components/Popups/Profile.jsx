@@ -20,6 +20,7 @@ export default function Profile({ closeModal, userId }) {
   const [data, setData] = useState(null);
   const [inventory, setInventory] = useState([]);
   const [selectedItemId, setSelectedItemId] = useState("");
+  const [showInventoryTip, setShowInventoryTip] = useState(false);
 
   useEffect(() => {
     const profileBody = JSON.stringify({
@@ -139,127 +140,99 @@ export default function Profile({ closeModal, userId }) {
                 <div className="Header">
                   <p>Actions</p>
                 </div>
-                <div className="Tip" onClick={async () => {
-                  const amountStr = window.prompt("Enter tip amount (R$):");
-                  if (!amountStr) return;
-                  const amount = parseFloat(amountStr);
-                  if (isNaN(amount) || amount <= 0) {
-                    toast.error("Invalid tip amount");
-                    return;
-                  }
-
-                  try {
-                    const body = JSON.stringify({ recipientRobloxId: userId, amount });
-                    const res = await fetch(`${config.api}/tip`, {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${getJWT()}`,
-                      },
-                      body,
-                    });
-
-                    if (res.ok) {
-                      toast.success("Tip sent!");
-                    } else {
-                      let msg = "Tip failed";
-                      try {
-                        const j = await res.json();
-                        msg = j.message || j.error || msg;
-                      } catch (e) {
-                        console.warn("Failed to parse tip error response:", e);
-                      }
-                      toast.error(msg);
-                    }
-                  } catch (e) {
-                    console.error(e);
-                    toast.error("Network error sending tip");
-                  }
-                }}>
+                <div className="Tip" onClick={() => setShowInventoryTip((value) => !value)}>
                   <img
                     src={tippingCash}
                     width={8}
                     height={8}
                     alt="tipping icon"
                   />
-                  <p>TIP</p>
+                  <p>{showInventoryTip ? "Hide Inventory" : "Show Inventory"}</p>
                 </div>
-                {inventory.length > 0 && (
+                {showInventoryTip && (
                   <div className="TipPet" style={{ marginTop: "16px" }}>
-                    <label htmlFor="pet-select" style={{ display: "block", marginBottom: "8px" }}>
-                      Tip one of your pets to {data?.username || "this user"}:
-                    </label>
-                    <select
-                      id="pet-select"
-                      value={selectedItemId}
-                      onChange={(e) => setSelectedItemId(e.target.value)}
-                      style={{ width: "100%", marginBottom: "10px" }}
-                    >
-                      <option value="">Select a pet</option>
-                      {inventory.map((pet) => {
-                        const itemName = pet.item?.display_name || pet.item?.item_name || pet.item?.name || "Unknown Pet";
-                        return (
-                          <option key={pet._id} value={pet._id}>
-                            {itemName}
-                          </option>
-                        );
-                      })}
-                    </select>
-                    <div
-                      className="Tip"
-                      onClick={async () => {
-                        if (!selectedItemId) {
-                          toast.error("Select a pet to tip");
-                          return;
-                        }
-
-                        const selectedItem = inventory.find((pet) => pet._id === selectedItemId);
-                        const itemName = selectedItem?.item?.display_name || selectedItem?.item?.item_name || selectedItem?.item?.name || "pet";
-
-                        const confirmTip = window.confirm(
-                          `Tip ${itemName} to ${data?.username || "this user"}? This will transfer the pet from your inventory.`
-                        );
-                        if (!confirmTip) return;
-
-                        try {
-                          const body = JSON.stringify({ recipientRobloxId: userId, itemId: selectedItemId });
-                          const res = await fetch(`${config.api}/tip`, {
-                            method: "POST",
-                            headers: {
-                              "Content-Type": "application/json",
-                              Authorization: `Bearer ${getJWT()}`,
-                            },
-                            body,
-                          });
-
-                          if (res.ok) {
-                            toast.success("Pet tip sent!");
-                            setInventory((current) => current.filter((pet) => pet._id !== selectedItemId));
-                            setSelectedItemId("");
-                          } else {
-                            let msg = "Tip failed";
-                            try {
-                              const j = await res.json();
-                              msg = j.message || j.error || msg;
-                            } catch (e) {
-                              console.warn("Failed to parse pet tip error response:", e);
+                    {inventory.length === 0 ? (
+                      <p style={{ marginBottom: "16px" }}>
+                        You have no pets available to tip.
+                      </p>
+                    ) : (
+                      <>
+                        <label htmlFor="pet-select" style={{ display: "block", marginBottom: "8px" }}>
+                          Select a pet to tip to {data?.username || "this user"}:
+                        </label>
+                        <select
+                          id="pet-select"
+                          value={selectedItemId}
+                          onChange={(e) => setSelectedItemId(e.target.value)}
+                          style={{ width: "100%", marginBottom: "10px" }}
+                        >
+                          <option value="">Select a pet</option>
+                          {inventory.map((pet) => {
+                            const itemName = pet.item?.display_name || pet.item?.item_name || pet.item?.name || "Unknown Pet";
+                            return (
+                              <option key={pet._id} value={pet._id}>
+                                {itemName}
+                              </option>
+                            );
+                          })}
+                        </select>
+                        <div
+                          className="Tip"
+                          onClick={async () => {
+                            if (!selectedItemId) {
+                              toast.error("Select a pet to tip");
+                              return;
                             }
-                            toast.error(msg);
-                          }
-                        } catch (e) {
-                          console.error(e);
-                          toast.error("Network error sending pet tip");
-                        }
-                      }}
-                    >
-                      <img
-                        src={tippingCash}
-                        width={8}
-                        height={8}
-                        alt="tipping icon"
-                      />
-                      <p>TIP PET</p>
-                    </div>
+
+                            const selectedItem = inventory.find((pet) => pet._id === selectedItemId);
+                            const itemName = selectedItem?.item?.display_name || selectedItem?.item?.item_name || selectedItem?.item?.name || "pet";
+
+                            const confirmTip = window.confirm(
+                              `Tip ${itemName} to ${data?.username || "this user"}? This will transfer the pet from your inventory.`
+                            );
+                            if (!confirmTip) return;
+
+                            try {
+                              const body = JSON.stringify({ recipientRobloxId: userId, itemId: selectedItemId });
+                              const res = await fetch(`${config.api}/tip`, {
+                                method: "POST",
+                                headers: {
+                                  "Content-Type": "application/json",
+                                  Authorization: `Bearer ${getJWT()}`,
+                                },
+                                body,
+                              });
+
+                              if (res.ok) {
+                                toast.success("Pet tip sent!");
+                                setInventory((current) => current.filter((pet) => pet._id !== selectedItemId));
+                                setSelectedItemId("");
+                              } else {
+                                let msg = "Tip failed";
+                                try {
+                                  const j = await res.json();
+                                  msg = j.message || j.error || msg;
+                                } catch (e) {
+                                  console.warn("Failed to parse pet tip error response:", e);
+                                }
+                                toast.error(msg);
+                              }
+                            } catch (e) {
+                              console.error(e);
+                              toast.error("Network error sending pet tip");
+                            }
+                          }}
+                        >
+                          <img
+                            src={tippingCash}
+                            width={8}
+                            height={8}
+                            alt="tipping icon"
+                          />
+                          <p>TIP PET</p>
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
