@@ -148,7 +148,7 @@ export default function Profile({ closeModal, userId }) {
                     height={8}
                     alt="tipping icon"
                   />
-                  <p>{showInventoryTip ? "Hide Inventory" : "Show Inventory"}</p>
+                  <p>{showInventoryTip ? "Hide Inventory" : "TIP"}</p>
                 </div>
                 {showInventoryTip && (
                   <div className="TipPet" style={{ marginTop: "16px" }}>
@@ -158,6 +158,10 @@ export default function Profile({ closeModal, userId }) {
                       </p>
                     ) : (
                       <>
+                        <div className="TipHeader">
+                          <p>Tip one of your pets to {data?.username || "this user"}</p>
+                          <p className="TipSubtext">Click a pet card, then press SEND TIP</p>
+                        </div>
                         <div className="InventoryGrid">
                           {inventory.map((pet) => {
                             const itemName = pet.item?.display_name || pet.item?.item_name || pet.item?.name || "Unknown Pet";
@@ -183,7 +187,7 @@ export default function Profile({ closeModal, userId }) {
                           })}
                         </div>
                         <div
-                          className="Tip"
+                          className={`SendTipButton ${!selectedItemId ? "Disabled" : ""}`}
                           onClick={async () => {
                             if (!selectedItemId) {
                               toast.error("Select a pet to tip");
@@ -194,7 +198,7 @@ export default function Profile({ closeModal, userId }) {
                             const itemName = selectedItem?.item?.display_name || selectedItem?.item?.item_name || selectedItem?.item?.name || "pet";
 
                             const confirmTip = window.confirm(
-                              `Tip ${itemName} to ${data?.username || "this user"}? This will transfer the pet from your inventory.`
+                              `Send ${itemName} to ${data?.username || "this user"}? This will transfer the pet from your inventory.`
                             );
                             if (!confirmTip) return;
 
@@ -235,7 +239,7 @@ export default function Profile({ closeModal, userId }) {
                             height={8}
                             alt="tipping icon"
                           />
-                          <p>TIP PET</p>
+                          <p>SEND TIP</p>
                         </div>
                       </>
                     )}
