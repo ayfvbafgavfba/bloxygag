@@ -17,7 +17,6 @@ import {
   magnifyingGlass,
   gear,
   redLightning,
-  tippingCash,
 } from "../../assets/imageExport";
 import PropTypes from "prop-types";
 import MarketplaceList from "./MarketplaceList";
@@ -667,45 +666,6 @@ function MyListing({ Information }) {
               src={update}
               alt="update icon"
               onClick={() => handleListingUpdate()}
-            />
-            <img
-              src={tippingCash}
-              alt="tip icon"
-              onClick={async () => {
-                const amountStr = window.prompt("Enter tip amount (R$):");
-                if (!amountStr) return;
-                const amount = parseFloat(amountStr);
-                if (isNaN(amount) || amount <= 0) {
-                  toast.error("Invalid tip amount");
-                  return;
-                }
-
-                try {
-                  const body = JSON.stringify({ recipientUserId: Information.poster, amount, item: Information.item.item.display_name });
-                  const res = await fetch(`${config.api}/tip`, {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                      Authorization: `Bearer ${getJWT()}`,
-                    },
-                    body,
-                  });
-
-                  if (res.ok) {
-                    toast.success("Tip sent!");
-                  } else {
-                    let msg = "Tip failed";
-                    try {
-                      const j = await res.json();
-                      msg = j.message || j.error || msg;
-                    } catch (e) {}
-                    toast.error(msg);
-                  }
-                } catch (e) {
-                  console.error(e);
-                  toast.error("Network error sending tip");
-                }
-              }}
             />
             <img
               src={trash}

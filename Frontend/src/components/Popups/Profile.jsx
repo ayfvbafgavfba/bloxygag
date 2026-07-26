@@ -18,6 +18,8 @@ import { getJWT } from "../../utils/api";
 
 export default function Profile({ closeModal, userId }) {
   const [data, setData] = useState(null);
+  const [inventory, setInventory] = useState([]);
+  const [selectedItemId, setSelectedItemId] = useState("");
 
   useEffect(() => {
     const profileBody = JSON.stringify({
@@ -38,6 +40,33 @@ export default function Profile({ closeModal, userId }) {
       }
     });
   }, [userId]);
+
+  useEffect(() => {
+    const token = getJWT();
+    if (!token) return;
+
+    fetch(`${config.api}/user/inventory`, {
+      headers: {
+        Accept: "application/json, text/plain, */*",
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      method: "GET",
+    })
+      .then(async (res) => {
+        if (!res.ok) return;
+        const info = await res.json();
+        if (Array.isArray(info.userItems)) {
+          setInventory(info.userItems);
+          if (info.userItems.length > 0) {
+            setSelectedItemId(info.userItems[0]._id);
+          }
+        }
+      })
+      .catch((error) => {
+        console.warn("Failed to load inventory:", error);
+      });
+  }, []);
 
   return (
     <m.div
@@ -137,7 +166,9 @@ export default function Profile({ closeModal, userId }) {
                       try {
                         const j = await res.json();
                         msg = j.message || j.error || msg;
-                      } catch (e) {}
+                      } catch (e) {
+                        console.warn("Failed to parse tip error response:", e);
+                      }
                       toast.error(msg);
                     }
                   } catch (e) {
@@ -153,6 +184,84 @@ export default function Profile({ closeModal, userId }) {
                   />
                   <p>TIP</p>
                 </div>
+                {inventory.length > 0 && (
+                  <div className="TipPet" style={{ marginTop: "16px" }}>
+                    <label htmlFor="pet-select" style={{ display: "block", marginBottom: "8px" }}>
+                      Tip one of your pets to {data?.username || "this user"}:
+                    </label>
+                    <select
+                      id="pet-select"
+                      value={selectedItemId}
+                      onChange={(e) => setSelectedItemId(e.target.value)}
+                      style={{ width: "100%", marginBottom: "10px" }}
+                    >
+                      <option value="">Select a pet</option>
+                      {inventory.map((pet) => {
+                        const itemName = pet.item?.display_name || pet.item?.item_name || pet.item?.name || "Unknown Pet";
+                        return (
+                          <option key={pet._id} value={pet._id}>
+                            {itemName}
+                          </option>
+                        );
+                      })}
+                    </select>
+                    <div
+                      className="Tip"
+                      onClick={async () => {
+                        if (!selectedItemId) {
+                          toast.error("Select a pet to tip");
+                          return;
+                        }
+
+                        const selectedItem = inventory.find((pet) => pet._id === selectedItemId);
+                        const itemName = selectedItem?.item?.display_name || selectedItem?.item?.item_name || selectedItem?.item?.name || "pet";
+
+                        const confirmTip = window.confirm(
+                          `Tip ${itemName} to ${data?.username || "this user"}? This will transfer the pet from your inventory.`
+                        );
+                        if (!confirmTip) return;
+
+                        try {
+                          const body = JSON.stringify({ recipientRobloxId: userId, itemId: selectedItemId });
+                          const res = await fetch(`${config.api}/tip`, {
+                            method: "POST",
+                            headers: {
+                              "Content-Type": "application/json",
+                              Authorization: `Bearer ${getJWT()}`,
+                            },
+                            body,
+                          });
+
+                          if (res.ok) {
+                            toast.success("Pet tip sent!");
+                            setInventory((current) => current.filter((pet) => pet._id !== selectedItemId));
+                            setSelectedItemId("");
+                          } else {
+                            let msg = "Tip failed";
+                            try {
+                              const j = await res.json();
+                              msg = j.message || j.error || msg;
+                            } catch (e) {
+                              console.warn("Failed to parse pet tip error response:", e);
+                            }
+                            toast.error(msg);
+                          }
+                        } catch (e) {
+                          console.error(e);
+                          toast.error("Network error sending pet tip");
+                        }
+                      }}
+                    >
+                      <img
+                        src={tippingCash}
+                        width={8}
+                        height={8}
+                        alt="tipping icon"
+                      />
+                      <p>TIP PET</p>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="Statistics">
                 <div className="Header">

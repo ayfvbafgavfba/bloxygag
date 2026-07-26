@@ -115,8 +115,12 @@ export default function App() {
     socket.on("BALANCE_UPDATE", handleBalanceUpdate);
     const tipHandler = (data) => {
       try {
-        if (data && data.from && data.to && data.amount) {
-          toast.success(`${data.from} tipped ${data.to} ${data.amount} R$`);
+        if (data && data.from && data.to) {
+          if (data.item) {
+            toast.success(`${data.from} tipped ${data.to} ${data.item}`);
+          } else if (data.amount) {
+            toast.success(`${data.from} tipped ${data.to} ${data.amount} R$`);
+          }
         }
       } catch (e) {
         console.warn('TIP handler error', e);
