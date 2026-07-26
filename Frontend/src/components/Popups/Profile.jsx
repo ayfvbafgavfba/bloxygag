@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import numeral from "numeral";
 import toast from "react-hot-toast";
 import { getJWT } from "../../utils/api";
+import { resolvePetImage } from "../../utils/image";
 
 export default function Profile({ closeModal, userId }) {
   const [data, setData] = useState(null);
@@ -157,25 +158,30 @@ export default function Profile({ closeModal, userId }) {
                       </p>
                     ) : (
                       <>
-                        <label htmlFor="pet-select" style={{ display: "block", marginBottom: "8px" }}>
-                          Select a pet to tip to {data?.username || "this user"}:
-                        </label>
-                        <select
-                          id="pet-select"
-                          value={selectedItemId}
-                          onChange={(e) => setSelectedItemId(e.target.value)}
-                          style={{ width: "100%", marginBottom: "10px" }}
-                        >
-                          <option value="">Select a pet</option>
+                        <div className="InventoryGrid">
                           {inventory.map((pet) => {
                             const itemName = pet.item?.display_name || pet.item?.item_name || pet.item?.name || "Unknown Pet";
                             return (
-                              <option key={pet._id} value={pet._id}>
-                                {itemName}
-                              </option>
+                              <div
+                                key={pet._id}
+                                className={`InventoryItem ${selectedItemId === pet._id ? "Selected" : ""}`}
+                                onClick={() => setSelectedItemId(pet._id)}
+                              >
+                                <img
+                                  src={resolvePetImage(
+                                    pet.item?.item_image,
+                                    pet.item?.display_name || pet.item?.item_name || pet.item?.name
+                                  )}
+                                  alt={itemName}
+                                />
+                                <div className="Info">
+                                  <p>{itemName}</p>
+                                  <p className="Value">{numeral(pet.item?.item_value || 0).format("0,0")}</p>
+                                </div>
+                              </div>
                             );
                           })}
-                        </select>
+                        </div>
                         <div
                           className="Tip"
                           onClick={async () => {

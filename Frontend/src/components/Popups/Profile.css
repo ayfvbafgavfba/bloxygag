@@ -214,6 +214,61 @@
               height: 8px;
             }
           }
+          .InventoryGrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 10px;
+            margin-bottom: 10px;
+          }
+          .InventoryItem {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 12px;
+            min-height: 145px;
+            border-radius: 10px;
+            background: linear-gradient(180deg, #19172c 0%, #1e1a39 100%) padding-box,
+              linear-gradient(to bottom, #322e58, #1e1a39) border-box;
+            border: 1px solid rgba(134, 58, 255, 0.2);
+            cursor: pointer;
+            transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+          }
+          .InventoryItem:hover {
+            transform: translateY(-2px);
+          }
+          .InventoryItem.Selected {
+            background: linear-gradient(180deg, #1d1141 0%, #2f1a5a 100%) padding-box,
+              linear-gradient(to bottom, #863aff, #5329a3) border-box;
+            border-color: #863aff;
+          }
+          .InventoryItem img {
+            width: 56px;
+            height: 56px;
+            object-fit: contain;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+          }
+          .InventoryItem .Info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            width: 100%;
+          }
+          .InventoryItem .Info p {
+            color: white;
+            font-size: 10px;
+            text-align: center;
+            line-height: 13px;
+            overflow-wrap: break-word;
+            max-height: 36px;
+          }
+          .InventoryItem .Info .Value {
+            color: #863aff;
+            font-weight: 600;
+            font-size: 12px;
+          }
         }
         .Statistics {
           display: flex;
