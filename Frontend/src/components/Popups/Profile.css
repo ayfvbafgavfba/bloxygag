@@ -269,6 +269,49 @@
             font-weight: 600;
             font-size: 12px;
           }
+          .TipHeader {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: 12px;
+          }
+          .TipHeader p {
+            color: #c8c8ff;
+            font-size: 11px;
+            margin: 0;
+          }
+          .TipHeader .TipSubtext {
+            color: #8c80c5;
+            font-size: 10px;
+          }
+          .SendTipButton {
+            display: flex;
+            width: 100%;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: linear-gradient(180deg, #863aff 0%, #8b3cff 100%) padding-box,
+              linear-gradient(to bottom, #a14cff, #863aff) border-box;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            height: 38px;
+            margin-top: 10px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+          }
+          .SendTipButton:hover:not(.Disabled) {
+            transform: scale(0.98);
+          }
+          .SendTipButton.Disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+          }
+          .SendTipButton p {
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            margin: 0;
+          }
         }
         .Statistics {
           display: flex;
