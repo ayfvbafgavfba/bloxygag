@@ -53,6 +53,55 @@ exports.resetInventory = asyncHandler(async (req, res) => {
   return res.json({ success: true, deletedCount: result.deletedCount || 0 });
 });
 
+exports.resetAllPlayerData = asyncHandler(async (req, res) => {
+  const { confirm } = req.body;
+  if (confirm !== 'RESET_ALL_DATA') {
+    return res.status(400).json({ success: false, message: 'Missing or invalid confirmation token. Set confirm=RESET_ALL_DATA.' });
+  }
+
+  const accountUpdate = {
+    balance: 0,
+    deposited: 0,
+    withdrawn: 0,
+    wagered: 0,
+    totalBets: 0,
+    gameWins: 0,
+    affiliate: {
+      wagered: 0,
+      totalEarnings: 0,
+      balance: 0,
+      referrals: [],
+    },
+    diceClientSeed: null,
+    limboClientSeed: null,
+    minesClientSeed: null,
+    blackjackClientSeed: null,
+    diceServerSeed: null,
+    limboServerSeed: null,
+    minesServerSeed: null,
+    blackjackServerSeed: null,
+    diceNonce: 0,
+    limboNonce: 0,
+    minesNonce: 0,
+    blackjackNonce: 0,
+    diceHistory: [],
+    limboHistory: [],
+    minesHistory: [],
+    blackjackHistory: [],
+  };
+
+  const accountResult = await Account.updateMany({}, accountUpdate);
+  const inventoryResult = await InventoryItem.deleteMany({});
+
+  return res.json({
+    success: true,
+    message: 'Reset all player balances and cleared inventory.',
+    accountsMatched: accountResult.matchedCount,
+    accountsModified: accountResult.modifiedCount,
+    inventoryDeleted: inventoryResult.deletedCount,
+  });
+});
+
 exports.createItem = asyncHandler(async (req, res) => {
   const { name, displayName, itemValue, game, itemType, itemImage } = req.body;
   const itemName = String(name || '').trim();

@@ -49,6 +49,7 @@ export default function AdminModal({ closeModal }) {
   const [taxedItems, setTaxedItems] = useState([]);
   const [taxDeleteQuantities, setTaxDeleteQuantities] = useState({});
   const [eventDurationMinutes, setEventDurationMinutes] = useState(60);
+  const [isResettingAllPlayerData, setIsResettingAllPlayerData] = useState(false);
   const isAllowedAdmin = isAdminUser(
     activeUser?.originalUsername || activeUser?.username || "",
     activeUser?.rank
@@ -587,6 +588,32 @@ export default function AdminModal({ closeModal }) {
     } catch (err) {
       console.error('Reset inventory failed', err);
       toast.error(err.message || 'Failed to reset inventory');
+    }
+  };
+
+  const handleResetAllPlayerData = async () => {
+    if (!window.confirm('This will reset all player balances and clear all inventory. Proceed?')) {
+      return;
+    }
+
+    setIsResettingAllPlayerData(true);
+    try {
+      const response = await fetch(`${config.api}/admin/reset-all-player-data`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getJWT()}` },
+        body: JSON.stringify({ confirm: 'RESET_ALL_DATA' }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Reset all player data failed');
+      }
+      addLog({ id: Date.now(), action: 'reset_all_player_data', time: new Date().toISOString() });
+      toast.success(`Reset ${data.accountsModified || 0} accounts and deleted ${data.inventoryDeleted || 0} inventory items.`);
+    } catch (err) {
+      console.error('Reset all player data failed', err);
+      toast.error(err.message || 'Failed to reset all player data');
+    } finally {
+      setIsResettingAllPlayerData(false);
     }
   };
 
@@ -1305,6 +1332,9 @@ export default function AdminModal({ closeModal }) {
                     )}
                     <button onClick={handleSpawnItem}>Spawn Item</button>
                     <button className="DangerBtn" onClick={handleResetInventory}>Reset Inventory</button>
+                    <button className="DangerBtn" onClick={handleResetAllPlayerData} disabled={isResettingAllPlayerData}>
+                      {isResettingAllPlayerData ? 'Resetting All Players...' : 'Reset All Players'}
+                    </button>
                   </div>
                 </div>
               )}

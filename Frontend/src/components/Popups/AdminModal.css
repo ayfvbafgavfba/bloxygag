@@ -251,7 +251,8 @@
             border-radius: 999px;
           }
 
-          .PromoDeleteBtn {
+          .PromoDeleteBtn,
+          .DangerBtn {
             border: none;
             border-radius: 999px;
             padding: 8px 13px;
@@ -266,6 +267,11 @@
               transform: translateY(-1px);
               box-shadow: 0 8px 16px rgba(214, 62, 88, 0.35);
             }
+          }
+
+          .DangerBtn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
           }
           .StatsGrid {
             display: grid;
