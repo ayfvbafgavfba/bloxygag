@@ -3,7 +3,7 @@ import config from "../config";
 const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/ayfvbafgavfba/bloxygag/main/Frontend/public/images/gag2";
 const PLACEHOLDER = "/images/pet-placeholder.svg";
 const GAG2_IMAGE_EXTENSIONS = "png|jpg|jpeg|webp|svg";
-const RACCOON_IMAGE = "/images/gag2/big_raccoon.webp";
+const DEFAULT_PET_IMAGE = "/images/pets/unicorn.png";
 
 function isRaccoonLike(imagePath = "", itemName = "") {
   const source = (imagePath || "").toString().trim().toLowerCase();
@@ -12,6 +12,16 @@ function isRaccoonLike(imagePath = "", itemName = "") {
     source.includes("raccoon") ||
     normalizedItemName.includes("raccoon") ||
     /(^|\/)raccoon(?:\.[^/]+)?$/i.test(source)
+  );
+}
+
+function isUnicornLike(imagePath = "", itemName = "") {
+  const source = (imagePath || "").toString().trim().toLowerCase();
+  const normalizedItemName = (itemName || "").toString().trim().toLowerCase();
+  return (
+    source.includes("unicorn") ||
+    normalizedItemName.includes("unicorn") ||
+    /(^|\/)unicorn(?:\.[^/]+)?$/i.test(source)
   );
 }
 
@@ -44,9 +54,14 @@ export const resolvePetImage = (imagePath, itemName = "") => {
   const source = (imagePath || "").toString().trim();
   const lowerSource = source.toLowerCase();
   const isRaccoon = isRaccoonLike(source, itemName);
+  const isUnicorn = isUnicornLike(source, itemName);
 
   if (isRaccoon) {
-    return RACCOON_IMAGE;
+    return "/images/pets/raccoon.png";
+  }
+
+  if (isUnicorn) {
+    return "/images/pets/unicorn.png";
   }
 
   if (!source || ["null", "undefined", "none", "n/a"].includes(lowerSource)) {

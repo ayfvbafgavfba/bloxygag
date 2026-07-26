@@ -2,32 +2,11 @@ const mongoose = require('mongoose');
 const Item = require('../models/item');
 const config = require('../config');
 
-// Pet image mapping - using local public PNG files
-// Place PNG files in: /Backend/public/images/pets/
-const petImageMapping = {
-  // Super Rare Pets
-  'Raccoon': '/images/pets/raccoon.png',
-  'Black Dragon': '/images/pets/blackdragon.png',
-  'Ice Serpent': '/images/pets/iceserpent.png',
-  
-  // Mythic Pets
-  'Monkey': '/images/pets/monkey.png',
-  'Golden Dragonfly': '/images/pets/goldendragonfly.png',
-  'Unicorn': '/images/pets/unicorn.png',
-  'Bear': '/images/pets/bear.png',
-  'Bald Eagle': '/images/pets/baldeagle.png',
-  
-  // Legendary Pets
-  'Robin': '/images/pets/robin.png',
-  'Bee': '/images/pets/bee.png',
-  'Butterfly': '/images/pets/butterfly.png',
-  'Deer': '/images/pets/deer.png',
-  'Turtle': '/images/pets/turtle.png',
-  
-  // Uncommon & Rare Pets
-  'Owl': '/images/pets/owl.png',
-  'Frog': '/images/pets/frog.png',
-  'Bunny': '/images/pets/bunny.png',
+const getImageForPetName = (petName) => {
+  const name = String(petName || '').trim().toLowerCase();
+  if (name.includes('unicorn')) return '/images/pets/unicorn.png';
+  if (name.includes('raccoon')) return '/images/pets/raccoon.png';
+  return null;
 };
 
 async function updatePetImages() {
@@ -35,28 +14,33 @@ async function updatePetImages() {
     await mongoose.connect(config.MONGODB_URI);
     console.log('Connected to MongoDB');
 
+    const pets = await Item.find({
+      $or: [
+        { item_name: { $regex: /unicorn/i } },
+        { item_name: { $regex: /raccoon/i } },
+      ],
+    });
+
     let updatedCount = 0;
-    let notFoundCount = 0;
+    let unchangedCount = 0;
 
-    for (const [petName, imageUrl] of Object.entries(petImageMapping)) {
-      const result = await Item.findOneAndUpdate(
-        { item_name: petName },
-        { item_image: imageUrl },
-        { new: true }
-      );
+    for (const pet of pets) {
+      const imageUrl = getImageForPetName(pet.item_name);
+      if (!imageUrl) continue;
 
-      if (result) {
-        console.log(`✓ Updated ${petName}`);
+      if (pet.item_image !== imageUrl) {
+        pet.item_image = imageUrl;
+        await pet.save();
+        console.log(`✓ Updated ${pet.item_name} -> ${imageUrl}`);
         updatedCount++;
       } else {
-        console.log(`✗ Pet not found: ${petName}`);
-        notFoundCount++;
+        unchangedCount++;
       }
     }
 
     console.log(`\n--- Summary ---`);
     console.log(`Updated: ${updatedCount}`);
-    console.log(`Not found: ${notFoundCount}`);
+    console.log(`Already correct: ${unchangedCount}`);
 
     await mongoose.connection.close();
     console.log('Database connection closed');
