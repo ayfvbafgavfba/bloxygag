@@ -20,7 +20,7 @@ import { resolvePetImage } from "../../utils/image";
 export default function Profile({ closeModal, userId }) {
   const [data, setData] = useState(null);
   const [inventory, setInventory] = useState([]);
-  const [selectedItemId, setSelectedItemId] = useState("");
+  const [selectedItemId, setSelectedItemId] = useState(null);
   const [showInventoryTip, setShowInventoryTip] = useState(false);
 
   useEffect(() => {
@@ -60,9 +60,6 @@ export default function Profile({ closeModal, userId }) {
         const info = await res.json();
         if (Array.isArray(info.userItems)) {
           setInventory(info.userItems);
-          if (info.userItems.length > 0) {
-            setSelectedItemId(info.userItems[0]._id);
-          }
         }
       })
       .catch((error) => {
@@ -141,7 +138,13 @@ export default function Profile({ closeModal, userId }) {
                 <div className="Header">
                   <p>Actions</p>
                 </div>
-                <div className="Tip" onClick={() => setShowInventoryTip((value) => !value)}>
+                <div
+                  className="Tip"
+                  onClick={() => {
+                    setSelectedItemId(null);
+                    setShowInventoryTip((value) => !value);
+                  }}
+                >
                   <img
                     src={tippingCash}
                     width={8}

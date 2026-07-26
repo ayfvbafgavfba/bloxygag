@@ -7,9 +7,10 @@
   align-items: center;
   justify-content: center;
   > .Profile {
-    max-width: 475px;
+    max-width: 520px;
     width: 100%;
-    height: 400px;
+    max-height: 90vh;
+    min-height: 420px;
     background: #1f1733;
     display: flex;
     flex-direction: column;
@@ -165,9 +166,11 @@
       box-sizing: border-box;
       height: 100%;
       width: 100%;
+      overflow: hidden;
       > .Container {
         width: 100%;
         min-height: 100%;
+        max-height: calc(100vh - 190px);
         background: #151223;
         box-shadow: 0px 7px 39.599998474121094px -1px #0000001a inset;
         border-radius: 0px 0px 15px 15px;
@@ -214,19 +217,34 @@
               height: 8px;
             }
           }
+          .TipPet {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: hidden;
+          }
           .InventoryGrid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(125px, 1fr));
             gap: 10px;
-            margin-bottom: 10px;
+            margin-bottom: 6px;
+            overflow-y: auto;
+            max-height: calc(100% - 80px);
+            min-height: 0;
+            padding-right: 6px;
+            padding-bottom: 8px;
           }
           .InventoryItem {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 8px;
-            padding: 12px;
-            min-height: 145px;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 14px;
+            min-height: 150px;
             border-radius: 10px;
             background: linear-gradient(180deg, #19172c 0%, #1e1a39 100%) padding-box,
               linear-gradient(to bottom, #322e58, #1e1a39) border-box;
@@ -295,7 +313,7 @@
             border: 1px solid transparent;
             border-radius: 8px;
             height: 38px;
-            margin-top: 10px;
+            margin-top: auto;
             cursor: pointer;
             transition: transform 0.2s ease;
           }
